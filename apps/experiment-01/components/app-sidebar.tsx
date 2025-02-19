@@ -26,6 +26,7 @@ import {
   RiLeafLine,
   RiLogoutBoxLine,
 } from "@remixicon/react";
+import Link from "next/link";
 
 // This is sample data.
 const data = {
@@ -50,7 +51,7 @@ const data = {
       items: [
         {
           title: "Dashboard",
-          url: "#",
+          url: "/dashboard",
           icon: RiScanLine,
         },
         // {
@@ -60,7 +61,7 @@ const data = {
         // },
         {
           title: "Contacts",
-          url: "#",
+          url: "/",
           icon: RiUserFollowLine,
           isActive: true,
         },
@@ -138,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className="group/menu-button font-medium gap-3 h-9 rounded-lg bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
                       isActive={item.isActive}
                     >
-                      <a href={item.url}>
+                      <Link href={item.url}>
                         {item.icon && (
                           <item.icon
                             className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
@@ -147,7 +148,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           />
                         )}
                         <span>{item.title}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
