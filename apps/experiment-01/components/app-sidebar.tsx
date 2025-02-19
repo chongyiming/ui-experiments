@@ -30,18 +30,18 @@ import {
 // This is sample data.
 const data = {
   teams: [
-    {
-      name: "InnovaCraft",
-      logo: "/logo-01.png",
-    },
-    {
-      name: "Acme Corp.",
-      logo: "/logo-01.png",
-    },
-    {
-      name: "Evil Corp.",
-      logo: "/logo-01.png",
-    },
+    // {
+    //   name: "InnovaCraft",
+    //   logo: "/logo-01.png",
+    // },
+    // {
+    //   name: "Acme Corp.",
+    //   logo: "/logo-01.png",
+    // },
+    // {
+    //   name: "Evil Corp.",
+    //   logo: "/logo-01.png",
+    // },
   ],
   navMain: [
     {
@@ -53,32 +53,32 @@ const data = {
           url: "#",
           icon: RiScanLine,
         },
-        {
-          title: "Insights",
-          url: "#",
-          icon: RiBardLine,
-        },
+        // {
+        //   title: "Insights",
+        //   url: "#",
+        //   icon: RiBardLine,
+        // },
         {
           title: "Contacts",
           url: "#",
           icon: RiUserFollowLine,
           isActive: true,
         },
-        {
-          title: "Tools",
-          url: "#",
-          icon: RiCodeSSlashLine,
-        },
+        // {
+        //   title: "Tools",
+        //   url: "#",
+        //   icon: RiCodeSSlashLine,
+        // },
         {
           title: "Integration",
           url: "#",
           icon: RiLoginCircleLine,
         },
-        {
-          title: "Layouts",
-          url: "#",
-          icon: RiLayoutLeftLine,
-        },
+        // {
+        //   title: "Layouts",
+        //   url: "#",
+        //   icon: RiLayoutLeftLine,
+        // },
         {
           title: "Reports",
           url: "#",
@@ -109,8 +109,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        {/* <TeamSwitcher teams={data.teams} /> */}
+        <div className="flex justify-center items-center my-4">
+          Your Logo
+          {/* <img
+            src="/path/to/your/logo.png" // Replace with the path to your logo
+            alt="Your Logo"
+            className="h-10 w-10" // Adjust the size as needed
+          /> */}
+        </div>
         <hr className="border-t border-border mx-2 -mt-px" />
+
         <SearchForm className="mt-3" />
       </SidebarHeader>
       <SidebarContent>
