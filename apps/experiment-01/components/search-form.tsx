@@ -13,10 +13,10 @@ export function SearchForm({ ...props }: React.ComponentProps<"form">) {
   const sidebarOptions = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Contacts", path: "/contact" },
-    { label: "Integration", path: "#" },
-    { label: "Reports", path: "#" },
-    { label: "Settings", path: "#" },
-    { label: "Help Center", path: "#" },
+    { label: "Integration", path: "1" },
+    { label: "Reports", path: "2" },
+    { label: "Settings", path: "3" },
+    { label: "Help Center", path: "4" },
   ];
 
   const filteredOptions = sidebarOptions.filter((option) =>
