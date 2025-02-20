@@ -1,3 +1,4 @@
+"use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,17 +10,48 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "../app/supabaseClient";
 
 import { RiSettingsLine, RiTeamLine, RiLogoutBoxLine } from "@remixicon/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function UserDropdown() {
+  const router = useRouter();
+  const [gmail, setGmail] = useState("");
+  const handleSignOut = () => {
+    // Add any sign out logic here (e.g., clearing tokens, cookies, etc.)
+
+    // Redirect to home page
+    router.push("/");
+  };
+
+  useEffect(() => {
+    const authToken = localStorage.getItem(
+      "sb-velfmvmemrzurdweumyo-auth-token"
+    );
+
+    if (authToken) {
+      try {
+        const parsedToken = JSON.parse(authToken);
+        const userId = parsedToken?.user?.id;
+        setGmail(parsedToken?.user?.email);
+        console.log("User ID:", userId);
+        console.log("Gmail", gmail);
+      } catch (error) {
+        console.error("Error parsing auth token:", error);
+      }
+    } else {
+      console.error("Auth token not found in localStorage");
+    }
+  });
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
           <Avatar className="size-8">
             <AvatarImage
-              src="./user.png"
+              src="./profile.jpg"
               width={32}
               height={32}
               alt="Profile image"
@@ -31,10 +63,10 @@ export default function UserDropdown() {
       <DropdownMenuContent className="max-w-64" align="end">
         <DropdownMenuLabel className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-medium text-foreground">
-            Keith Kennedy
+            Joseph
           </span>
           <span className="truncate text-xs font-normal text-muted-foreground">
-            k.kennedy@originui.com
+            {gmail}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -47,13 +79,13 @@ export default function UserDropdown() {
             />
             <span>Account settings</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          {/* <DropdownMenuItem>
             <RiTeamLine size={16} className="opacity-60" aria-hidden="true" />
-            <span>Affiliate area</span>
-          </DropdownMenuItem>
+            <span></span>
+          </DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut}>
           <RiLogoutBoxLine
             size={16}
             className="opacity-60"

@@ -138,7 +138,7 @@ const Dashboard = () => {
           {/* Bottom Row: New Transaction Button */}
           <div className="flex items-center justify-between px-3 py-2 border-t">
             <div className="flex-1"></div> {/* Spacer */}
-            <Button onClick={handleNewTransaction}>New Transaction</Button>
+            <Button onClick={handleNewTransaction}>Add Sale</Button>
           </div>
         </header>
 

@@ -1,5 +1,6 @@
+"use client";
 import * as React from "react";
-
+import { usePathname } from "next/navigation";
 import { SearchForm } from "@/components/search-form";
 import { TeamSwitcher } from "@/components/team-switcher";
 import {
@@ -27,6 +28,7 @@ import {
   RiLogoutBoxLine,
 } from "@remixicon/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // This is sample data.
 const data = {
@@ -61,9 +63,8 @@ const data = {
         // },
         {
           title: "Contacts",
-          url: "/",
+          url: "/contact",
           icon: RiUserFollowLine,
-          isActive: true,
         },
         // {
         //   title: "Tools",
@@ -107,6 +108,14 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const handleSignOut = () => {
+    // Add any sign out logic here (e.g., clearing tokens, cookies, etc.)
+
+    // Redirect to home page
+    router.push("/");
+  };
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -124,7 +133,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SearchForm className="mt-3" />
       </SidebarHeader>
       <SidebarContent>
-        {/* We create a SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
           <SidebarGroup key={item.title}>
             <SidebarGroupLabel className="uppercase text-muted-foreground/60">
@@ -137,7 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       asChild
                       className="group/menu-button font-medium gap-3 h-9 rounded-lg bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
-                      isActive={item.isActive}
+                      isActive={item.url === pathname}
                     >
                       <Link href={item.url}>
                         {item.icon && (
@@ -161,7 +169,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <hr className="border-t border-border mx-2 -mt-px" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="font-medium gap-3 h-9 rounded-lg bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto">
+            <SidebarMenuButton
+              className="font-medium gap-3 h-9 rounded-lg bg-gradient-to-r hover:bg-transparent hover:from-sidebar-accent hover:to-sidebar-accent/40 data-[active=true]:from-primary/20 data-[active=true]:to-primary/5 [&>svg]:size-auto"
+              onClick={handleSignOut}
+            >
               <RiLogoutBoxLine
                 className="text-muted-foreground/60 group-data-[active=true]/menu-button:text-primary"
                 size={22}
