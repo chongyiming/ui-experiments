@@ -20,7 +20,8 @@ export default function UserDropdown() {
   const router = useRouter();
   const [gmail, setGmail] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog visibility
-
+  const [username, setUsername] = useState("");
+  const [userId, setUserId] = useState("");
   const handleSignOut = () => {
     // Add any sign out logic here (e.g., clearing tokens, cookies, etc.)
 
@@ -38,14 +39,44 @@ export default function UserDropdown() {
         const parsedToken = JSON.parse(authToken);
         const userId = parsedToken?.user?.id;
         setGmail(parsedToken?.user?.email);
+        setUserId(parsedToken?.user?.id);
       } catch (error) {
         console.error("Error parsing auth token:", error);
       }
     } else {
       console.error("Auth token not found in localStorage");
     }
-  }, [gmail]);
+  }, []);
 
+  useEffect(() => {
+    if (userId) {
+      getInfo(userId); // Call getInfo only when userId is set
+    }
+  }, [userId]);
+  async function getInfo(userId: string) {
+    try {
+      const { data: agentData, error: agentError } = await supabase
+        .from("Agents")
+        .select("username")
+        .eq("user_id", userId)
+        .single(); // Use .single() if you expect only one row
+
+      if (agentError) {
+        throw new Error(agentError.message);
+      }
+
+      // Set the form fields with the fetched data
+      if (agentData) {
+        setUsername(agentData.username || "User");
+      }
+
+      console.log("Agent data fetched successfully:", agentData);
+      return agentData;
+    } catch (error) {
+      console.error("Error fetching agent info:", error);
+      throw error;
+    }
+  }
   return (
     <>
       <DropdownMenu>
@@ -65,7 +96,7 @@ export default function UserDropdown() {
         <DropdownMenuContent className="max-w-64" align="end">
           <DropdownMenuLabel className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-medium text-foreground">
-              Joseph
+              {username}
             </span>
             <span className="truncate text-xs font-normal text-muted-foreground">
               {gmail}
