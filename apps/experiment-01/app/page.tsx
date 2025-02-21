@@ -98,7 +98,7 @@ export default function Page() {
         const { data: newPermissionData, error: newPermissionError } =
           await supabase
             .from("Agents")
-            .insert([{ gmail: email, perm: 0, user_id: userId }]); // Now using userId from the session
+            .insert([{ gmail: email, perm: 0, user_id: userId, ren: true }]); // Now using userId from the session
 
         if (newPermissionError) {
           setError(newPermissionError.message);

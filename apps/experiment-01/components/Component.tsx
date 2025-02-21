@@ -1,7 +1,6 @@
 "use client";
 
 import { useCharacterLimit } from "@/components/ui/use-character-limit";
-import { useImageUpload } from "@/components/ui/use-image-upload";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,11 +13,93 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Check, ImagePlus, X } from "lucide-react";
-import { useId, useState, useEffect } from "react";
+import { ImagePlus } from "lucide-react";
+import { useId, useState, useEffect, useRef } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { supabase } from "../app/supabaseClient";
+import { v4 as uuidv4 } from "uuid";
+
+// Image upload hook with enhanced functionality
+function useImageUpload(userId: string) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadToSupabase = async (file: File) => {
+    try {
+      setIsUploading(true);
+
+      // Delete existing profile pictures
+      const { data: existingFiles, error: listError } = await supabase.storage
+        .from("test")
+        .list(`${userId}/pfp/`);
+
+      if (listError) throw listError;
+
+      if (existingFiles && existingFiles.length > 0) {
+        const filePaths = existingFiles.map(
+          (file) => `${userId}/pfp/${file.name}`
+        );
+        const { error: deleteError } = await supabase.storage
+          .from("test")
+          .remove(filePaths);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Upload new profile picture
+      const fileName = `${uuidv4()}-${file.name.replace(/[^a-zA-Z0-9-.]/g, "")}`;
+      const filePath = `pfp/${userId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("test")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: publicUrl } = supabase.storage
+        .from("test")
+        .getPublicUrl(filePath);
+
+      return publicUrl.publicUrl;
+    } catch (error) {
+      console.error("Error handling image upload:", error);
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Create local preview
+      const localPreviewUrl = URL.createObjectURL(file);
+      setPreviewUrl(localPreviewUrl);
+
+      // Upload to Supabase
+      await uploadToSupabase(file);
+    } catch (error) {
+      console.error("Error handling file change:", error);
+      setPreviewUrl(null);
+    }
+  };
+
+  return {
+    previewUrl,
+    isUploading,
+    fileInputRef,
+    handleFileChange,
+  };
+}
 
 function Component({
   isOpen,
@@ -38,39 +119,18 @@ function Component({
   ren: boolean | "indeterminate";
 }) {
   const id = useId();
-
-  const maxLength = 180;
-  const {
-    value: bio,
-    characterCount,
-    handleChange: handleBioChange,
-    maxLength: limit,
-  } = useCharacterLimit({
-    maxLength,
-  });
-
+  const [userId, setUserId] = useState("");
   const [localFirstName, setLocalFirstName] = useState(firstName);
   const [localLastName, setLocalLastName] = useState(lastName);
   const [localUsername, setLocalUsername] = useState(username);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isRenChecked, setIsRenChecked] = useState<boolean | "indeterminate">(
     ren
   );
-  const [userId, setUserId] = useState("");
-
-  // Sync local state with props when they change
-  useEffect(() => {
-    setLocalFirstName(firstName);
-    setLocalLastName(lastName);
-    setLocalUsername(username);
-    setIsRenChecked(ren);
-  }, [firstName, lastName, username, ren]);
 
   useEffect(() => {
     const authToken = localStorage.getItem(
       "sb-velfmvmemrzurdweumyo-auth-token"
     );
-
     if (authToken) {
       try {
         const parsedToken = JSON.parse(authToken);
@@ -78,39 +138,20 @@ function Component({
       } catch (error) {
         console.error("Error parsing auth token:", error);
       }
-    } else {
-      console.error("Auth token not found in localStorage");
     }
   }, []);
 
+  useEffect(() => {
+    setLocalFirstName(firstName);
+    setLocalLastName(lastName);
+    setLocalUsername(username);
+    setIsRenChecked(ren);
+  }, [firstName, lastName, username, ren]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    // Log image file details
-    if (imageFile) {
-      console.log("Image File:", imageFile);
-      console.log("Image URL:", URL.createObjectURL(imageFile));
-    } else {
-      console.log("No image uploaded.");
-    }
-
     try {
-      // Call uploadInfo to update the agent's data
-      await uploadInfo();
-      console.log("Data updated successfully.");
-    } catch (error) {
-      console.error("Error updating data:", error);
-    }
-
-    // Optionally, you can close the dialog after submission
-    // onClose();
-    window.location.reload(); // Refresh the page
-  };
-
-  async function uploadInfo() {
-    try {
-      // Update the existing record where user_id matches
-      const { data: updatedData, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("Agents")
         .update({
           first_name: localFirstName,
@@ -120,17 +161,13 @@ function Component({
         })
         .eq("user_id", userId);
 
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
+      if (updateError) throw updateError;
 
-      console.log("Data", updatedData);
-      return updatedData;
+      window.location.reload();
     } catch (error) {
-      console.error("Error updating info:", error);
-      throw error;
+      console.error("Error updating profile:", error);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -141,14 +178,11 @@ function Component({
           </DialogTitle>
         </DialogHeader>
         <DialogDescription className="sr-only">
-          Make changes to your profile here. You can change your photo and set a
-          username.
+          Make changes to your profile here. Click the image to update your
+          photo.
         </DialogDescription>
         <div className="overflow-y-auto">
-          <Avatar
-            defaultImage={images.length > 0 ? images[0] : "./profile.jpg"}
-            onImageChange={(file) => setImageFile(file)}
-          />
+          <Avatar userId={userId} defaultImage={images[0]} />
           <div className="px-6 pb-6 pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -159,7 +193,6 @@ function Component({
                     placeholder="First Name"
                     value={localFirstName}
                     onChange={(e) => setLocalFirstName(e.target.value)}
-                    type="text"
                     required
                   />
                 </div>
@@ -170,24 +203,20 @@ function Component({
                     placeholder="Last Name"
                     value={localLastName}
                     onChange={(e) => setLocalLastName(e.target.value)}
-                    type="text"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor={`${id}-username`}>Username</Label>
-                <div className="relative">
-                  <Input
-                    id={`${id}-username`}
-                    className="peer pe-9"
-                    placeholder="Username"
-                    value={localUsername}
-                    onChange={(e) => setLocalUsername(e.target.value)}
-                    type="text"
-                    required
-                  />
-                </div>
+                <Input
+                  id={`${id}-username`}
+                  className="peer pe-9"
+                  placeholder="Username"
+                  value={localUsername}
+                  onChange={(e) => setLocalUsername(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
@@ -217,41 +246,31 @@ function Component({
 }
 
 function Avatar({
+  userId,
   defaultImage,
-  onImageChange,
 }: {
+  userId: string;
   defaultImage?: string;
-  onImageChange: (file: File) => void;
 }) {
-  const { previewUrl, fileInputRef, handleThumbnailClick, handleFileChange } =
-    useImageUpload();
-
-  const currentImage = previewUrl || defaultImage;
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onImageChange(file); // Pass the uploaded file to the parent component
-      handleFileChange(event); // Handle the file upload logic
-    }
-  };
+  const { previewUrl, isUploading, fileInputRef, handleFileChange } =
+    useImageUpload(userId);
+  const currentImage = previewUrl || defaultImage || "./profile.jpg";
 
   return (
     <div className="px-6">
       <div className="relative flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-background bg-muted shadow-sm shadow-black/10">
-        {currentImage && (
-          <img
-            src={currentImage}
-            className="h-full w-full object-cover"
-            width={80}
-            height={80}
-            alt="Profile image"
-          />
-        )}
+        <img
+          src={currentImage}
+          className="h-full w-full object-cover"
+          width={80}
+          height={80}
+          alt="Profile image"
+        />
         <button
           type="button"
           className="absolute flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
-          onClick={handleThumbnailClick}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
           aria-label="Change profile picture"
         >
           <ImagePlus size={16} strokeWidth={2} aria-hidden="true" />
@@ -259,7 +278,7 @@ function Avatar({
         <input
           type="file"
           ref={fileInputRef}
-          onChange={handleFileUpload}
+          onChange={handleFileChange}
           className="hidden"
           accept="image/*"
           aria-label="Upload profile picture"
