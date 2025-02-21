@@ -32,7 +32,7 @@ function useImageUpload(userId: string) {
       // Delete existing profile pictures
       const { data: existingFiles, error: listError } = await supabase.storage
         .from("test")
-        .list(`${userId}/pfp/`);
+        .list(`pfp/${userId}/`);
 
       if (listError) throw listError;
 
