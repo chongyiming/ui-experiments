@@ -23,9 +23,19 @@ import { supabase } from "../app/supabaseClient";
 function Component({
   isOpen,
   onClose,
+  images,
+  username,
+  firstName,
+  lastName,
+  ren,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  images: string[];
+  username: string;
+  firstName: string;
+  lastName: string;
+  ren: boolean | "indeterminate";
 }) {
   const id = useId();
 
@@ -39,12 +49,22 @@ function Component({
     maxLength,
   });
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
+  const [localFirstName, setLocalFirstName] = useState(firstName);
+  const [localLastName, setLocalLastName] = useState(lastName);
+  const [localUsername, setLocalUsername] = useState(username);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [isRenChecked, setIsRenChecked] = useState<boolean | "indeterminate">();
+  const [isRenChecked, setIsRenChecked] = useState<boolean | "indeterminate">(
+    ren
+  );
   const [userId, setUserId] = useState("");
+
+  // Sync local state with props when they change
+  useEffect(() => {
+    setLocalFirstName(firstName);
+    setLocalLastName(lastName);
+    setLocalUsername(username);
+    setIsRenChecked(ren);
+  }, [firstName, lastName, username, ren]);
 
   useEffect(() => {
     const authToken = localStorage.getItem(
@@ -63,11 +83,6 @@ function Component({
     }
   }, []);
 
-  useEffect(() => {
-    if (userId) {
-      getInfo(userId); // Call getInfo only when userId is set
-    }
-  }, [userId]); // Run whenever userId changes
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -88,17 +103,19 @@ function Component({
     }
 
     // Optionally, you can close the dialog after submission
-    onClose();
+    // onClose();
+    window.location.reload(); // Refresh the page
   };
+
   async function uploadInfo() {
     try {
       // Update the existing record where user_id matches
       const { data: updatedData, error: updateError } = await supabase
         .from("Agents")
         .update({
-          first_name: firstName,
-          last_name: lastName,
-          username: username,
+          first_name: localFirstName,
+          last_name: localLastName,
+          username: localUsername,
           ren: isRenChecked,
         })
         .eq("user_id", userId);
@@ -114,33 +131,7 @@ function Component({
       throw error;
     }
   }
-  async function getInfo(userId: string) {
-    try {
-      const { data: agentData, error: agentError } = await supabase
-        .from("Agents")
-        .select("first_name, last_name, username,ren")
-        .eq("user_id", userId)
-        .single(); // Use .single() if you expect only one row
 
-      if (agentError) {
-        throw new Error(agentError.message);
-      }
-
-      // Set the form fields with the fetched data
-      if (agentData) {
-        setFirstName(agentData.first_name || "");
-        setLastName(agentData.last_name || "");
-        setUsername(agentData.username || "");
-        setIsRenChecked(agentData.ren ?? true);
-      }
-
-      console.log("Agent data fetched successfully:", agentData);
-      return agentData;
-    } catch (error) {
-      console.error("Error fetching agent info:", error);
-      throw error;
-    }
-  }
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex flex-col gap-0 overflow-y-visible p-0 sm:max-w-lg [&>button:last-child]:top-3.5">
@@ -155,7 +146,7 @@ function Component({
         </DialogDescription>
         <div className="overflow-y-auto">
           <Avatar
-            defaultImage="./profile.jpg"
+            defaultImage={images.length > 0 ? images[0] : "./profile.jpg"}
             onImageChange={(file) => setImageFile(file)}
           />
           <div className="px-6 pb-6 pt-4">
@@ -166,8 +157,8 @@ function Component({
                   <Input
                     id={`${id}-first-name`}
                     placeholder="First Name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    value={localFirstName}
+                    onChange={(e) => setLocalFirstName(e.target.value)}
                     type="text"
                     required
                   />
@@ -177,8 +168,8 @@ function Component({
                   <Input
                     id={`${id}-last-name`}
                     placeholder="Last Name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    value={localLastName}
+                    onChange={(e) => setLocalLastName(e.target.value)}
                     type="text"
                     required
                   />
@@ -191,41 +182,23 @@ function Component({
                     id={`${id}-username`}
                     className="peer pe-9"
                     placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={localUsername}
+                    onChange={(e) => setLocalUsername(e.target.value)}
                     type="text"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                {/* <Label htmlFor={`${id}-bio`}>Biography</Label> */}
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id={`${id}-ren-checkbox`} // Link the Checkbox to the Label
-                    checked={isRenChecked} // Controlled state
-                    onCheckedChange={(checked) => setIsRenChecked(checked)} // Update state
-                    aria-label="REN" // Accessibility
+                    id={`${id}-ren-checkbox`}
+                    checked={isRenChecked}
+                    onCheckedChange={(checked) => setIsRenChecked(checked)}
+                    aria-label="REN"
                   />
                   <Label htmlFor={`${id}-ren-checkbox`}>REN</Label>
                 </div>
-                {/* <Textarea
-                  id={`${id}-bio`}
-                  placeholder="Write a few sentences about yourself"
-                  value={bio}
-                  maxLength={maxLength}
-                  onChange={handleBioChange}
-                  aria-describedby={`${id}-description`}
-                />
-                <p
-                  id={`${id}-description`}
-                  className="mt-2 text-right text-xs text-muted-foreground"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <span className="tabular-nums">{limit - characterCount}</span>{" "}
-                  characters left
-                </p> */}
               </div>
               <DialogFooter className="border-t border-border px-6 py-4">
                 <DialogClose asChild>

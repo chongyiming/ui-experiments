@@ -21,7 +21,12 @@ export default function UserDropdown() {
   const [gmail, setGmail] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog visibility
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [ren, setRen] = useState<boolean | "indeterminate">(false);
   const [userId, setUserId] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+
   const handleSignOut = () => {
     // Add any sign out logic here (e.g., clearing tokens, cookies, etc.)
 
@@ -50,14 +55,16 @@ export default function UserDropdown() {
 
   useEffect(() => {
     if (userId) {
+      getImage(userId);
       getInfo(userId); // Call getInfo only when userId is set
     }
   }, [userId]);
+
   async function getInfo(userId: string) {
     try {
       const { data: agentData, error: agentError } = await supabase
         .from("Agents")
-        .select("username")
+        .select("username, first_name, last_name, ren")
         .eq("user_id", userId)
         .single(); // Use .single() if you expect only one row
 
@@ -67,7 +74,10 @@ export default function UserDropdown() {
 
       // Set the form fields with the fetched data
       if (agentData) {
-        setUsername(agentData.username || "User");
+        setUsername(agentData.username || "");
+        setFirstName(agentData.first_name || "");
+        setLastName(agentData.last_name || "");
+        setRen(agentData.ren ?? false);
       }
 
       console.log("Agent data fetched successfully:", agentData);
@@ -77,6 +87,34 @@ export default function UserDropdown() {
       throw error;
     }
   }
+
+  async function getImage(userId: string) {
+    const path = `pfp/${userId}/`;
+
+    const { data, error } = await supabase.storage.from("test").list(path, {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: "name", order: "asc" },
+    });
+
+    if (error) {
+      setImages([]);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const validFiles = data.slice(0, 1); // Take the first file
+      const imageUrls = validFiles.map(
+        (file) =>
+          supabase.storage.from("test").getPublicUrl(`${path}${file.name}`).data
+            .publicUrl
+      );
+      setImages(imageUrls);
+    } else {
+      setImages([]);
+    }
+  }
+
   return (
     <>
       <DropdownMenu>
@@ -84,12 +122,12 @@ export default function UserDropdown() {
           <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
             <Avatar className="size-8">
               <AvatarImage
-                src="./profile.jpg"
+                src={images.length > 0 ? images[0] : "./profile.jpg"} // Use the first image URL or a fallback
                 width={32}
                 height={32}
                 alt="Profile image"
               />
-              <AvatarFallback>KK</AvatarFallback>
+              <AvatarFallback></AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -126,7 +164,15 @@ export default function UserDropdown() {
       </DropdownMenu>
 
       {/* Render the Component dialog */}
-      <Component isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+      <Component
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        images={images}
+        username={username}
+        firstName={firstName}
+        lastName={lastName}
+        ren={ren}
+      />
     </>
   );
 }
