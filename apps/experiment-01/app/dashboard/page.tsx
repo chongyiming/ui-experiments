@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
+  Plus,
 } from "lucide-react";
 import TransactionForm from "@/components/transaction-form";
 import TransactionList from "@/components/transaction-list";
@@ -41,46 +42,100 @@ import {
 } from "@/components/ui/sidebar";
 import UserDropdown from "@/components/user-dropdown";
 import { RiScanLine } from "@remixicon/react";
+import {
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+  Line,
+  LineChart,
+} from "recharts";
+import { MetricCard } from "@/components/ui/MetricCard";
+import { RecentEvents } from "@/components/ui/RecentEvents";
 
-const upcomingAppointments = [
+const data = [
+  { date: "Jan 2024", sales: 3, rentals: 2 },
+  { date: "Feb 2024", sales: 4, rentals: 3 },
+  { date: "Mar 2024", sales: 2, rentals: 4 },
+  { date: "Apr 2024", sales: 5, rentals: 2 },
+  { date: "May 2024", sales: 3, rentals: 5 },
+  { date: "Jun 2024", sales: 4, rentals: 3 },
+  { date: "Jul 2024", sales: 6, rentals: 4 },
+  { date: "Aug 2024", sales: 3, rentals: 3 },
+  { date: "Sep 2024", sales: 5, rentals: 4 },
+  { date: "Oct 2024", sales: 4, rentals: 3 },
+  { date: "Nov 2024", sales: 3, rentals: 5 },
+  { date: "Dec 2024", sales: 4, rentals: 4 },
+];
+
+const commissionData = [
+  { month: "Jan", actual: 45000, target: 40000 },
+  { month: "Feb", actual: 52000, target: 40000 },
+  { month: "Mar", actual: 38000, target: 40000 },
+  { month: "Apr", actual: 65000, target: 45000 },
+  { month: "May", actual: 48000, target: 45000 },
+  { month: "Jun", actual: 55000, target: 45000 },
+  { month: "Jul", actual: 72000, target: 50000 },
+  { month: "Aug", actual: 44000, target: 50000 },
+  { month: "Sep", actual: 68000, target: 50000 },
+  { month: "Oct", actual: 51000, target: 55000 },
+  { month: "Nov", actual: 49000, target: 55000 },
+  { month: "Dec", actual: 58000, target: 55000 },
+];
+
+const cards = [
   {
-    id: 1,
-    title: "Property Viewing",
-    client: "John Smith",
-    property: "123 Main St",
-    time: "2:00 PM Today",
+    title: "Average Deal Size",
+    value: "$485K",
+    change: "+12.3% vs last month",
   },
   {
-    id: 2,
-    title: "Contract Signing",
-    client: "Sarah Johnson",
-    property: "456 Oak Ave",
-    time: "10:00 AM Tomorrow",
+    title: "Conversion Rate",
+    value: "75%",
+    change: "+5% vs last month",
+  },
+  {
+    title: "Client Satisfaction",
+    value: "4.7",
+    ratings: [4.8, 4.2, 4.5, 4.9, 4.7],
   },
 ];
 
-const followUpReminders = [
-  { id: 1, client: "Mike Brown", task: "Follow up on offer", dueDate: "Today" },
+const recentEvents = [
   {
-    id: 2,
-    client: "Lisa Davis",
-    task: "Send property documents",
-    dueDate: "Tomorrow",
-  },
-];
-
-const recentTasks = [
-  {
-    id: 1,
-    title: "Update listing photos",
-    status: "pending",
-    dueDate: "Today",
+    agent: "Sarah Chen",
+    action: "SOLD" as const,
+    property: "Oceanview Mansion",
+    price: "$2.4M",
+    timestamp: "2h",
+    avatar: "/avatar-chen.jpg",
   },
   {
-    id: 2,
-    title: "Client feedback call",
-    status: "completed",
-    dueDate: "Yesterday",
+    agent: "Michael Rodriguez",
+    action: "RENT" as const,
+    property: "Downtown Penthouse",
+    price: "$8.5K/mo",
+    timestamp: "4h",
+    avatar: "/avatar-rodriguez.jpg",
+  },
+  {
+    agent: "Emily Wong",
+    action: "SOLD" as const,
+    property: "Suburban Villa",
+    price: "$950K",
+    timestamp: "1d",
+    avatar: "/avatar-wong.jpg",
+  },
+  {
+    agent: "David Kim",
+    action: "RENT" as const,
+    property: "Lake House Estate",
+    price: "$12K/mo",
+    timestamp: "1d",
+    avatar: "/avatar-kim.jpg",
   },
 ];
 
@@ -90,6 +145,8 @@ const Dashboard = () => {
   const [selectedMarketType, setSelectedMarketType] = useState<
     "primary" | "secondary" | null
   >(null);
+  const [pinnedCards, setPinnedCards] = useState<number[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   const handleNewTransaction = () => {
     setShowMarketTypeDialog(true);
@@ -99,6 +156,39 @@ const Dashboard = () => {
     setSelectedMarketType(type);
     setShowMarketTypeDialog(false);
     setShowTransactionForm(true);
+  };
+
+  const togglePin = (index: number) => {
+    setPinnedCards((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
+  const bgColor = isDarkMode ? "bg-[#121212]" : "bg-white";
+  const borderColor = isDarkMode ? "border-gray-800" : "border-gray-200";
+  const textColor = isDarkMode ? "text-white" : "text-gray-900";
+  const gridColor = isDarkMode ? "#333" : "#e5e7eb";
+  const labelColor = isDarkMode ? "#888" : "#666";
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div
+          className={`${isDarkMode ? "bg-gray-800" : "bg-white"} p-4 rounded-lg shadow-lg border ${borderColor}`}
+        >
+          <p className={`text-sm font-medium ${textColor}`}>{label}</p>
+          <div className="space-y-1 mt-2">
+            <p className="text-blue-400 text-sm">
+              Sales: {payload[0].value} properties
+            </p>
+            <p className="text-emerald-400 text-sm">
+              Rentals: {payload[1].value} properties
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -133,12 +223,6 @@ const Dashboard = () => {
               </Button>
               <UserDropdown />
             </div>
-          </div>
-
-          {/* Bottom Row: New Transaction Button */}
-          <div className="flex items-center justify-between px-3 py-2 border-t">
-            <div className="flex-1"></div> {/* Spacer */}
-            <Button onClick={handleNewTransaction}>Add Sale</Button>
           </div>
         </header>
 
@@ -211,169 +295,211 @@ const Dashboard = () => {
               </div>
             </div>
           ) : (
-            <>
-              {/* Enhanced Performance Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="p-6 glass-card animate-fadeIn">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Active Listings
-                      </p>
-                      <h3 className="text-2xl font-semibold mt-2">24</h3>
-                      <p className="text-sm text-green-600 mt-1">
-                        ↑ 4 from last month
-                      </p>
-                    </div>
-                    <Building className="h-5 w-5 text-primary" />
-                  </div>
-                </Card>
-
-                <Card className="p-6 glass-card animate-fadeIn animation-delay-100">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Monthly Commission
-                      </p>
-                      <h3 className="text-2xl font-semibold mt-2">$45,850</h3>
-                      <p className="text-sm text-green-600 mt-1">
-                        ↑ 12% from last month
-                      </p>
-                    </div>
-                    <DollarSign className="h-5 w-5 text-primary" />
-                  </div>
-                </Card>
-
-                <Card className="p-6 glass-card animate-fadeIn animation-delay-200">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Client Base
-                      </p>
-                      <h3 className="text-2xl font-semibold mt-2">156</h3>
-                      <p className="text-sm text-green-600 mt-1">
-                        ↑ 8 new this month
-                      </p>
-                    </div>
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                </Card>
-
-                <Card className="p-6 glass-card animate-fadeIn animation-delay-300">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Conversion Rate
-                      </p>
-                      <h3 className="text-2xl font-semibold mt-2">68%</h3>
-                      <p className="text-sm text-green-600 mt-1">
-                        ↑ 5% from last month
-                      </p>
-                    </div>
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                  </div>
-                </Card>
-              </div>
-
-              {/* Appointments and Reminders Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {/* Upcoming Appointments */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">
-                      Upcoming Appointments
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              {/* Main Content (Charts and Metrics) */}
+              <div className="lg:col-span-3 space-y-8">
+                {/* Key Metrics Section */}
+                <div
+                  className={`${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className={`text-xl font-semibold ${textColor}`}>
+                      Key Metrics
                     </h2>
-                    <CalendarDays className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-4">
-                    {upcomingAppointments.map((appointment) => (
-                      <div
-                        key={appointment.id}
-                        className="flex items-start justify-between p-3 bg-muted/50 rounded-lg"
-                      >
-                        <div>
-                          <h3 className="font-medium">{appointment.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {appointment.client} - {appointment.property}
-                          </p>
-                        </div>
-                        <span className="text-sm font-medium">
-                          {appointment.time}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Follow-up Reminders */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">
-                      Follow-up Reminders
-                    </h2>
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-4">
-                    {followUpReminders.map((reminder) => (
-                      <div
-                        key={reminder.id}
-                        className="flex items-start justify-between p-3 bg-muted/50 rounded-lg"
-                      >
-                        <div>
-                          <h3 className="font-medium">{reminder.client}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {reminder.task}
-                          </p>
-                        </div>
-                        <span className="text-sm font-medium">
-                          {reminder.dueDate}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-
-              {/* Tasks Section */}
-              <section className="mb-8">
-                <Card className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">Tasks</h2>
-                    <Button variant="outline" size="sm">
-                      + Add Task
+                    <Button onClick={handleNewTransaction}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Sales
                     </Button>
                   </div>
-                  <div className="space-y-4">
-                    {recentTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <CheckCircle
-                            className={`h-5 w-5 ${task.status === "completed" ? "text-green-500" : "text-muted-foreground"}`}
-                          />
-                          <div>
-                            <h3 className="font-medium">{task.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Due: {task.dueDate}
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          Mark Complete
-                        </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {cards.map((card, index) => (
+                      <div key={index}>
+                        <MetricCard
+                          {...card}
+                          isPinned={pinnedCards.includes(index)}
+                          onPin={() => togglePin(index)}
+                          isDarkMode={isDarkMode}
+                        />
                       </div>
                     ))}
                   </div>
-                </Card>
-              </section>
+                </div>
 
-              {/* Transactions Section */}
-              <section className="mb-8">
-                <TransactionList />
-              </section>
-            </>
+                {/* Charts Section */}
+                <div
+                  className={`${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
+                >
+                  <div className="space-y-12">
+                    {/* Monthly Performance Chart */}
+                    <div>
+                      <div className="flex flex-col md:flex-row justify-between mb-6">
+                        <div>
+                          <h2 className={`text-xl font-semibold ${textColor}`}>
+                            Monthly Performance
+                          </h2>
+                          <p
+                            className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                          >
+                            Properties Sold and Rented
+                          </p>
+                        </div>
+                        <div className="text-sm font-medium mt-4 md:mt-0">
+                          <span className="inline-flex items-center mr-4">
+                            <span className="w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
+                            <span className={textColor}>Sales</span>
+                          </span>
+                          <span className="inline-flex items-center">
+                            <span className="w-3 h-3 rounded-full bg-emerald-400 mr-2"></span>
+                            <span className={textColor}>Rentals</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={data} margin={{ left: 10 }}>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke={gridColor}
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="date"
+                              stroke={labelColor}
+                              tickLine={false}
+                              axisLine={{ stroke: gridColor }}
+                            />
+                            <YAxis
+                              stroke={labelColor}
+                              tickLine={false}
+                              axisLine={{ stroke: gridColor }}
+                              label={{
+                                value: "Number of Properties",
+                                angle: -90,
+                                position: "insideLeft",
+                                offset: 0, // Adjust Y-axis label position
+                                style: {
+                                  fill: labelColor,
+                                  textAnchor: "middle",
+                                },
+                              }}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="sales" stackId="a" fill="#60a5fa" />
+                            <Bar dataKey="rentals" stackId="a" fill="#34d399" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Commission Performance Chart */}
+                    <div>
+                      <div className="flex flex-col md:flex-row justify-between mb-6">
+                        <div>
+                          <h2 className={`text-xl font-semibold ${textColor}`}>
+                            Commission Performance
+                          </h2>
+                          <p
+                            className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                          >
+                            Actual vs Target ($)
+                          </p>
+                        </div>
+                        <div className="text-sm font-medium mt-4 md:mt-0">
+                          <span className="inline-flex items-center mr-4">
+                            <span className="w-3 h-3 rounded-full bg-purple-400 mr-2"></span>
+                            <span className={textColor}>Actual Commission</span>
+                          </span>
+                          <span className="inline-flex items-center">
+                            <span className="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
+                            <span className={textColor}>Target</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={commissionData}
+                            margin={{ left: 10 }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke={gridColor}
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="month"
+                              stroke={labelColor}
+                              tickLine={false}
+                              axisLine={{ stroke: gridColor }}
+                            />
+                            <YAxis
+                              stroke={labelColor}
+                              tickLine={false}
+                              axisLine={{ stroke: gridColor }}
+                              tickFormatter={(value) => `$${value / 1000}k`}
+                              label={{
+                                value: "Commission Amount ($)",
+                                angle: -90,
+                                position: "insideLeft",
+                                offset: 0, // Adjust Y-axis label position
+                                style: {
+                                  fill: labelColor,
+                                  textAnchor: "middle",
+                                },
+                              }}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: isDarkMode
+                                  ? "#1f1f1f"
+                                  : "#fff",
+                                borderColor: gridColor,
+                              }}
+                              formatter={(value: number) => [
+                                `$${value.toLocaleString()}`,
+                                "",
+                              ]}
+                              labelStyle={{
+                                color: isDarkMode ? "#fff" : "#000",
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="actual"
+                              name="Actual Commission"
+                              stroke="#c084fc"
+                              strokeWidth={2}
+                              dot={{ fill: "#c084fc" }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="target"
+                              name="Target"
+                              stroke="#9ca3af"
+                              strokeWidth={2}
+                              strokeDasharray="5 5"
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Events Section */}
+              <div className="lg:col-span-1">
+                <div
+                  className={`${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
+                >
+                  <h2 className={`text-xl font-semibold mb-6 ${textColor}`}>
+                    Recent Events
+                  </h2>
+                  <RecentEvents events={recentEvents} isDarkMode={isDarkMode} />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </SidebarInset>
