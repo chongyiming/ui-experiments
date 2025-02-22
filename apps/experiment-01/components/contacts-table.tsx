@@ -87,7 +87,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import { supabase } from "../app/supabaseClient";
 type Item = {
   id: string;
   image: string;
@@ -300,23 +300,100 @@ export default function ContactsTable() {
 
   const columns = useMemo(() => getColumns({ data, setData }), [data]);
 
+  // useEffect(() => {
+  //   async function fetchPosts() {
+  //     try {
+  //       const res = await fetch(
+  //         "https://res.cloudinary.com/dlzlfasou/raw/upload/users-02_mohkpe.json"
+  //       );
+  //       const data = await res.json();
+  //       setData(data);
+  //     } catch (error) {
+  //       console.error("Error fetching data:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   }
+  //   fetchPosts();
+  // }, []);
   useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const res = await fetch(
-          "https://res.cloudinary.com/dlzlfasou/raw/upload/users-02_mohkpe.json"
-        );
-        const data = await res.json();
-        setData(data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchPosts();
+    getAgentsWithImages();
   }, []);
 
+  async function getAgentsWithImages() {
+    try {
+      // Fetch all agents
+      const { data: agentsData, error: agentsError } = await supabase
+        .from("Agents")
+        .select("user_id, username, ren");
+
+      if (agentsError) {
+        throw agentsError;
+      }
+
+      // Map images to agents
+      const agentsWithImages = await Promise.all(
+        agentsData.map(async (agent) => {
+          const agentImagePath = `pfp/${agent.user_id}/`;
+
+          // List files in the agent's pfp directory
+          const { data: imagesData, error: imagesError } =
+            await supabase.storage.from("test").list(agentImagePath, {
+              limit: 1,
+              offset: 0,
+              sortBy: { column: "name", order: "desc" },
+            }); // Get the latest image
+
+          if (imagesError) {
+            console.error(
+              `Error listing images for user ${agent.user_id}:`,
+              imagesError
+            );
+            return {
+              ...agent,
+              image: "/default-profile.jpg", // Fallback to default image
+            };
+          }
+
+          // Get the latest image (first in the sorted list)
+          const agentImage = imagesData[0];
+          const imageUrl = agentImage
+            ? supabase.storage
+                .from("test")
+                .getPublicUrl(`${agentImagePath}${agentImage.name}`).data
+                .publicUrl
+            : "/profile.jpg"; // Fallback to default image if no image is found
+          console.log(imageUrl);
+          return {
+            ...agent,
+            image: imageUrl,
+          };
+        })
+      );
+
+      // Transform agentsWithImages into the Item type structure
+      const transformedData = agentsWithImages.map((agent) => ({
+        id: agent.user_id || "unknown",
+        image: agent.image,
+        name: agent.username || "Unknown",
+        status: "Active",
+        location: "Unknown",
+        verified: agent.ren,
+        referral: {
+          name: "Unknown",
+          image: "/profile.jpg", // Default referral image
+        },
+        value: 0,
+        joinDate: new Date().toISOString(),
+      }));
+
+      setData(transformedData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
   const handleDeleteRows = () => {
     const selectedRows = table.getSelectedRowModel().rows;
     const updatedData = data.filter(

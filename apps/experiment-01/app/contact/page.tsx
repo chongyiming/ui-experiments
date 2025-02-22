@@ -1,3 +1,4 @@
+"use client";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -32,6 +33,8 @@ import UserDropdown from "@/components/user-dropdown";
 import ContactsTable from "@/components/contacts-table";
 import { RiScanLine } from "@remixicon/react";
 import { StatsGrid } from "@/components/stats-grid";
+import { useEffect } from "react";
+import { supabase } from "../supabaseClient";
 
 export default function Page() {
   return (
@@ -66,8 +69,7 @@ export default function Page() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 lg:gap-6 py-4 lg:py-6">
-          {/* Page intro */}
-          <div className="flex items-center justify-between gap-4">
+          {/* <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold">Oilà, Larry!</h1>
               <p className="text-sm text-muted-foreground">
@@ -77,7 +79,6 @@ export default function Page() {
             </div>
             <Button className="px-3">Add Contact</Button>
           </div>
-          {/* Numbers */}
           <StatsGrid
             stats={[
               {
@@ -153,8 +154,7 @@ export default function Page() {
                 ),
               },
             ]}
-          />
-          {/* Table */}
+          /> */}
           <div className="min-h-[100vh] flex-1 md:min-h-min">
             <ContactsTable />
           </div>

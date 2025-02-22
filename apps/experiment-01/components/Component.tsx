@@ -24,7 +24,6 @@ function useImageUpload(userId: string) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-
   const uploadToSupabase = async (file: File) => {
     try {
       setIsUploading(true);
@@ -37,9 +36,12 @@ function useImageUpload(userId: string) {
       if (listError) throw listError;
 
       if (existingFiles && existingFiles.length > 0) {
+        // Correctly construct file paths
         const filePaths = existingFiles.map(
-          (file) => `${userId}/pfp/${file.name}`
+          (file) => `pfp/${userId}/${file.name}` // Correct path format
         );
+
+        // Delete existing files
         const { error: deleteError } = await supabase.storage
           .from("test")
           .remove(filePaths);
