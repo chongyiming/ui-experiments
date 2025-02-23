@@ -102,7 +102,17 @@ type Item = {
   value: number;
   joinDate: string;
 };
-
+type AgentWithReferral = {
+  user_id: string;
+  username: string;
+  ren: boolean;
+  referrer_id: string | null;
+  image: string;
+  referral: {
+    name: string;
+    image: string;
+  };
+};
 const statusFilterFn: FilterFn<Item> = (
   row,
   columnId,
@@ -325,14 +335,14 @@ export default function ContactsTable() {
       // Fetch all agents
       const { data: agentsData, error: agentsError } = await supabase
         .from("Agents")
-        .select("user_id, username, ren");
+        .select("user_id, username, ren, referrer_id");
 
       if (agentsError) {
         throw agentsError;
       }
 
-      // Map images to agents
-      const agentsWithImages = await Promise.all(
+      // Map images to agents and fetch referral information
+      const agentsWithImages: AgentWithReferral[] = await Promise.all(
         agentsData.map(async (agent) => {
           const agentImagePath = `pfp/${agent.user_id}/`;
 
@@ -352,6 +362,10 @@ export default function ContactsTable() {
             return {
               ...agent,
               image: "/default-profile.jpg", // Fallback to default image
+              referral: {
+                name: "Unknown",
+                image: "/profile.jpg", // Default referral image
+              },
             };
           }
 
@@ -363,10 +377,46 @@ export default function ContactsTable() {
                 .getPublicUrl(`${agentImagePath}${agentImage.name}`).data
                 .publicUrl
             : "/profile.jpg"; // Fallback to default image if no image is found
-          console.log(imageUrl);
+
+          // Fetch referral information
+          let referral = {
+            name: "Unknown",
+            image: "/profile.jpg", // Default referral image
+          };
+
+          if (agent.referrer_id) {
+            const { data: referralData, error: referralError } = await supabase
+              .from("Agents")
+              .select("username")
+              .eq("user_id", agent.referrer_id)
+              .single();
+
+            if (!referralError && referralData) {
+              const referralImagePath = `pfp/${agent.referrer_id}/`;
+              const { data: referralImagesData, error: referralImagesError } =
+                await supabase.storage.from("test").list(referralImagePath, {
+                  limit: 1,
+                  offset: 0,
+                  sortBy: { column: "name", order: "desc" },
+                });
+
+              if (!referralImagesError && referralImagesData.length > 0) {
+                const referralImage = referralImagesData[0];
+                referral.image = supabase.storage
+                  .from("test")
+                  .getPublicUrl(
+                    `${referralImagePath}${referralImage?.name}`
+                  ).data.publicUrl;
+              }
+
+              referral.name = referralData.username;
+            }
+          }
+
           return {
             ...agent,
             image: imageUrl,
+            referral,
           };
         })
       );
@@ -379,10 +429,7 @@ export default function ContactsTable() {
         status: "Active",
         location: "Unknown",
         verified: agent.ren,
-        referral: {
-          name: "Unknown",
-          image: "/profile.jpg", // Default referral image
-        },
+        referral: agent.referral,
         value: 0,
         joinDate: new Date().toISOString(),
       }));

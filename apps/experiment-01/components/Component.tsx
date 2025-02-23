@@ -128,6 +128,12 @@ function Component({
   const [isRenChecked, setIsRenChecked] = useState<boolean | "indeterminate">(
     ren
   );
+  const [referrerId, setReferrerId] = useState<string | null>(null);
+  const [agents, setAgents] = useState<{ user_id: string; username: string }[]>(
+    []
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
 
   useEffect(() => {
     const authToken = localStorage.getItem(
@@ -141,6 +147,7 @@ function Component({
         console.error("Error parsing auth token:", error);
       }
     }
+    getAgents();
   }, []);
 
   useEffect(() => {
@@ -149,6 +156,21 @@ function Component({
     setLocalUsername(username);
     setIsRenChecked(ren);
   }, [firstName, lastName, username, ren]);
+
+  async function getAgents() {
+    // Fetch all agents
+    const { data: agentsData, error: agentsError } = await supabase
+      .from("Agents")
+      .select("user_id, username");
+
+    if (agentsError) {
+      throw agentsError;
+    }
+
+    if (agentsData) {
+      setAgents(agentsData);
+    }
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -160,6 +182,7 @@ function Component({
           last_name: localLastName,
           username: localUsername,
           ren: isRenChecked,
+          referrer_id: referrerId,
         })
         .eq("user_id", userId);
 
@@ -170,6 +193,10 @@ function Component({
       console.error("Error updating profile:", error);
     }
   };
+
+  const filteredAgents = agents.filter((agent) =>
+    agent?.username?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -219,6 +246,43 @@ function Component({
                   onChange={(e) => setLocalUsername(e.target.value)}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`${id}-referrer`}>Referrer</Label>
+                <div className="relative">
+                  <Input
+                    id={`${id}-referrer`}
+                    className="peer pe-9"
+                    placeholder="Search for a referrer"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsDropdownVisible(true)} // Show dropdown on focus
+                    onBlur={() => setIsDropdownVisible(false)} // Hide dropdown on blur
+                  />
+                  {isDropdownVisible && ( // Only show dropdown when input is focused
+                    <div className="absolute z-10 mt-2 w-full rounded-md border border-border bg-background shadow-lg max-h-60 overflow-y-auto">
+                      {filteredAgents.map((agent) => (
+                        <div
+                          key={agent.user_id}
+                          className="cursor-pointer px-4 py-2 hover:bg-muted"
+                          onMouseDown={(e) => e.preventDefault()} // Prevent input blur on click
+                          onClick={() => {
+                            setReferrerId(agent.user_id);
+                            setSearchTerm(agent.username);
+                            setIsDropdownVisible(false); // Hide dropdown after selection
+                          }}
+                        >
+                          {agent.username}
+                        </div>
+                      ))}
+                      {filteredAgents.length === 0 && (
+                        <div className="px-4 py-2 text-muted-foreground">
+                          No agents found
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
