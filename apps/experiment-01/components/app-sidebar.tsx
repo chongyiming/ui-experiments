@@ -29,6 +29,8 @@ import {
 } from "@remixicon/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "../app/supabaseClient";
 
 // This is sample data.
 const data = {
@@ -72,6 +74,11 @@ const data = {
         //   icon: RiCodeSSlashLine,
         // },
         {
+          title: "Manage Role",
+          url: "/managerole",
+          icon: RiLoginCircleLine,
+        },
+        {
           title: "Integration",
           url: "#",
           icon: RiLoginCircleLine,
@@ -83,7 +90,7 @@ const data = {
         // },
         {
           title: "Reports",
-          url: "#",
+          url: "/reports",
           icon: RiLeafLine,
         },
       ],
@@ -111,11 +118,88 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const router = useRouter();
   const handleSignOut = () => {
-    // Add any sign out logic here (e.g., clearing tokens, cookies, etc.)
-
-    // Redirect to home page
     router.push("/");
   };
+  const [userId, setUserId] = useState("");
+  const [perm, setPerm] = useState("");
+  const [read,setRead] = useState(false)
+  console.log("Perm",perm)
+  console.log("Read",read)
+
+  useEffect(() => {
+    const authToken = localStorage.getItem(
+      "sb-velfmvmemrzurdweumyo-auth-token"
+    );
+    if (authToken) {
+      try {
+        const parsedToken = JSON.parse(authToken);
+        setUserId(parsedToken?.user?.id);
+      } catch (error) {
+        console.error("Error parsing auth token:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userId || perm) {
+      getInfo(userId); // Call getInfo only when userId is set
+      getPerm(perm);
+
+    }
+  }, [userId,perm]);
+
+  async function getInfo(userId: string) {
+    try {
+      const { data: agentData, error: agentError } = await supabase
+        .from("Agents")
+        .select("perm")
+        .eq("user_id", userId)
+        .single(); // Use .single() if you expect only one row
+
+      if (agentError) {
+        throw new Error(agentError.message);
+      }
+
+      // Set the form fields with the fetched data
+      if (agentData) {
+
+        setPerm(agentData.perm)
+        
+      }
+
+      console.log("Agent data fetched successfully:", agentData);
+      return agentData;
+    } catch (error) {
+      console.error("Error fetching agent info:", error);
+      throw error;
+    }
+  }
+
+  async function getPerm(perm: string) {
+    try {
+      const { data: agentData, error: agentError } = await supabase
+        .from("Permissions")
+        .select("read")
+        .eq("id", perm)
+        .single(); // Use .single() if you expect only one row
+
+
+
+      // Set the form fields with the fetched data
+      if (agentData) {
+
+        setRead(agentData.read)
+        
+      }
+
+      console.log("Agent data fetched successfully:", agentData);
+      return agentData;
+    } catch (error) {
+      console.error("Error fetching agent info:", error);
+      throw error;
+    }
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>

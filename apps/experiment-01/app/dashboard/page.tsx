@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,8 @@ import {
   Clock,
   TrendingUp,
   Plus,
+  MoreHorizontal,
+  ChevronDown
 } from "lucide-react";
 import TransactionForm from "@/components/transaction-form";
 import TransactionList from "@/components/transaction-list";
@@ -55,98 +57,64 @@ import {
 } from "recharts";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { RecentEvents } from "@/components/ui/RecentEvents";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { LineChartPulse } from "@/components/ui/LineChartPulse";
+import CommissionClaimsCard from "@/components/ui/CommissionClaimsCard";
+import UpcomingAppointmentsCard from "@/components/ui/UpcomingAppointmentsCard";
+import '@/components/index.css'
 
-const data = [
-  { date: "Jan 2024", sales: 3, rentals: 2 },
-  { date: "Feb 2024", sales: 4, rentals: 3 },
-  { date: "Mar 2024", sales: 2, rentals: 4 },
-  { date: "Apr 2024", sales: 5, rentals: 2 },
-  { date: "May 2024", sales: 3, rentals: 5 },
-  { date: "Jun 2024", sales: 4, rentals: 3 },
-  { date: "Jul 2024", sales: 6, rentals: 4 },
-  { date: "Aug 2024", sales: 3, rentals: 3 },
-  { date: "Sep 2024", sales: 5, rentals: 4 },
-  { date: "Oct 2024", sales: 4, rentals: 3 },
-  { date: "Nov 2024", sales: 3, rentals: 5 },
-  { date: "Dec 2024", sales: 4, rentals: 4 },
+// Sample data for charts
+const yearlySalesData = [
+  { date: new Date("2023-01-15"), value: 4 },
+  { date: new Date("2023-02-15"), value: 6 },
+  { date: new Date("2023-03-15"), value: 8 },
+  { date: new Date("2023-04-15"), value: 7 },
+  { date: new Date("2023-05-15"), value: 9 },
+  { date: new Date("2023-06-15"), value: 12 },
+  { date: new Date("2023-07-15"), value: 11 },
+  { date: new Date("2023-08-15"), value: 13 },
+  { date: new Date("2023-09-15"), value: 10 },
+  { date: new Date("2023-10-15"), value: 8 },
+  { date: new Date("2023-11-15"), value: 11 },
+  { date: new Date("2023-12-15"), value: 15 },
 ];
 
-const commissionData = [
-  { month: "Jan", actual: 45000, target: 40000 },
-  { month: "Feb", actual: 52000, target: 40000 },
-  { month: "Mar", actual: 38000, target: 40000 },
-  { month: "Apr", actual: 65000, target: 45000 },
-  { month: "May", actual: 48000, target: 45000 },
-  { month: "Jun", actual: 55000, target: 45000 },
-  { month: "Jul", actual: 72000, target: 50000 },
-  { month: "Aug", actual: 44000, target: 50000 },
-  { month: "Sep", actual: 68000, target: 50000 },
-  { month: "Oct", actual: 51000, target: 55000 },
-  { month: "Nov", actual: 49000, target: 55000 },
-  { month: "Dec", actual: 58000, target: 55000 },
+// Sample recent activity
+const recentActivity = [
+  { agent: "Sarah Lee", action: "Sold", property: "Parkview Heights", value: "$1.2M", time: "2h" },
+  { agent: "James Wong", action: "Rented", property: "Riverside Res.", value: "$3.6K", time: "1d" },
+  { agent: "Michael Chen", action: "Sold", property: "Lakeside Manor", value: "$2.5M", time: "2d" },
+  { agent: "Aisha Patel", action: "Rented", property: "Urban Lofts", value: "$5.2K", time: "3d" }
 ];
 
-const cards = [
-  {
-    title: "Average Deal Size",
-    value: "$485K",
-    change: "+12.3% vs last month",
-  },
-  {
-    title: "Conversion Rate",
-    value: "75%",
-    change: "+5% vs last month",
-  },
-  {
-    title: "Client Satisfaction",
-    value: "4.7",
-    ratings: [4.8, 4.2, 4.5, 4.9, 4.7],
-  },
-];
-
-const recentEvents = [
-  {
-    agent: "Sarah Chen",
-    action: "SOLD" as const,
-    property: "Oceanview Mansion",
-    price: "$2.4M",
-    timestamp: "2h",
-    avatar: "/avatar-chen.jpg",
-  },
-  {
-    agent: "Michael Rodriguez",
-    action: "RENT" as const,
-    property: "Downtown Penthouse",
-    price: "$8.5K/mo",
-    timestamp: "4h",
-    avatar: "/avatar-rodriguez.jpg",
-  },
-  {
-    agent: "Emily Wong",
-    action: "SOLD" as const,
-    property: "Suburban Villa",
-    price: "$950K",
-    timestamp: "1d",
-    avatar: "/avatar-wong.jpg",
-  },
-  {
-    agent: "David Kim",
-    action: "RENT" as const,
-    property: "Lake House Estate",
-    price: "$12K/mo",
-    timestamp: "1d",
-    avatar: "/avatar-kim.jpg",
-  },
+// Sample previous activity for the modal
+const previousActivity = [
+  { agent: "David Kim", action: "Sold", property: "Mountain View", value: "$1.8M", time: "4d" },
+  { agent: "Priya Singh", action: "Rented", property: "Downtown Condo", value: "$4.2K", time: "5d" },
+  { agent: "Carlos Rodriguez", action: "Sold", property: "Sunset Villa", value: "$3.1M", time: "1w" },
+  { agent: "Emma Wilson", action: "Rented", property: "Harbor Apartments", value: "$2.9K", time: "1w" },
+  { agent: "Alex Thompson", action: "Sold", property: "Maple Residences", value: "$2.2M", time: "2w" }
 ];
 
 const Dashboard = () => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showMarketTypeDialog, setShowMarketTypeDialog] = useState(false);
-  const [selectedMarketType, setSelectedMarketType] = useState<
-    "primary" | "secondary" | null
-  >(null);
+  const [selectedMarketType, setSelectedMarketType] = useState<"primary" | "secondary" | null>(null);
   const [pinnedCards, setPinnedCards] = useState<number[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [salesProgress, setSalesProgress] = useState(0);
+  const [commissionProgress, setCommissionProgress] = useState(0);
+  const [showMoreActivity, setShowMoreActivity] = useState(false);
+
+  // Greeting based on time of day
+  const currentHour = new Date().getHours();
+  let greeting = "Good morning";
+  if (currentHour >= 12 && currentHour < 17) {
+    greeting = "Good afternoon";
+  } else if (currentHour >= 17) {
+    greeting = "Good evening";
+  }
 
   const handleNewTransaction = () => {
     setShowMarketTypeDialog(true);
@@ -189,6 +157,55 @@ const Dashboard = () => {
       );
     }
     return null;
+  };
+
+  useEffect(() => {
+    const animateProgress = (setter: any, target: any, speed = 20) => {
+      let current = 0;
+      const interval = setInterval(() => {
+        if (current < target) {
+          current += 1;
+          setter(current);
+        } else {
+          clearInterval(interval);
+        }
+      }, speed);
+      
+      return interval;
+    };
+    
+    const salesInterval = animateProgress(setSalesProgress, 66);
+    const commissionInterval = animateProgress(setCommissionProgress, 78, 15);
+    
+    return () => {
+      clearInterval(salesInterval);
+      clearInterval(commissionInterval);
+    };
+  }, []);
+
+  const renderSegments = (current: any, total: any, count = 10) => {
+    const segments = [];
+    const filledSegments = Math.floor((current / 100) * count);
+    
+    for (let i = 0; i < count; i++) {
+      segments.push(
+        <div
+          key={i}
+          className={`h-1 w-full rounded-full transition-all duration-300 ${
+            i < filledSegments ? 'bg-blue-500' : 'bg-slate-700'
+          }`}
+          style={{
+            opacity: i < filledSegments ? 1 : 0.3,
+            transition: `opacity 300ms ease-out ${i * 50}ms, background-color 300ms ease-out`
+          }}
+        />
+      );
+    }
+    return (
+      <div className="grid grid-cols-10 gap-1 w-full">
+        {segments}
+      </div>
+    );
   };
 
   return (
@@ -269,6 +286,52 @@ const Dashboard = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Activity Modal */}
+        {showMoreActivity && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-slate-900 rounded-lg shadow-lg w-full max-w-2xl">
+              <div className="flex justify-between items-center p-4 border-b border-slate-800">
+                <h3 className="text-lg font-medium">All Recent Activity</h3>
+                <Button variant="ghost" size="icon" onClick={() => setShowMoreActivity(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="p-4 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-3">
+                  {[...recentActivity, ...previousActivity].map((activity, index) => (
+                    <div key={index} className="flex items-center py-2 border-b border-slate-800">
+                      <Avatar className="h-8 w-8 mr-3 bg-slate-700">
+                        <AvatarFallback>
+                          {activity.agent.split(' ').map(name => name[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-medium">{activity.agent}</div>
+                        <div className="text-slate-400">
+                          <span className={activity.action === "Sold" ? "text-green-400" : "text-blue-400"}>
+                            {activity.action}
+                          </span>
+                          {" "}{activity.property} • {activity.value}
+                        </div>
+                      </div>
+                      <div className="text-slate-400 text-sm">{activity.time}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 border-t border-slate-800">
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => setShowMoreActivity(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
         <div className="flex flex-1 flex-col gap-4 lg:gap-6 py-4 lg:py-6">
           {showTransactionForm ? (
@@ -295,208 +358,181 @@ const Dashboard = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Main Content (Charts and Metrics) */}
-              <div className="lg:col-span-3 space-y-8">
-                {/* Key Metrics Section */}
-                <div
-                  className={`${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
-                >
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className={`text-xl font-semibold ${textColor}`}>
-                      Key Metrics
-                    </h2>
-                    <Button onClick={handleNewTransaction}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Sales
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {cards.map((card, index) => (
-                      <div key={index}>
-                        <MetricCard
-                          {...card}
-                          isPinned={pinnedCards.includes(index)}
-                          onPin={() => togglePin(index)}
-                          isDarkMode={isDarkMode}
-                        />
-                      </div>
-                    ))}
+            <div className="h-[calc(100vh-4rem)] overflow-auto pb-6">
+              {/* CSS Grid Dashboard Layout */}
+              
+              
+              <div className="grid-dashboard">
+                {/* Welcome Message */}
+                <div className="welcome">
+                  <div className={`dashboard-card ${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}>
+                    <div className="flex justify-between items-center">
+                      <h2 className={`text-xl font-semibold ${textColor}`}>
+                        {greeting}, John
+                      </h2>
+                      <Button onClick={handleNewTransaction}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Sales
+                      </Button>
+                    </div>
                   </div>
                 </div>
-
-                {/* Charts Section */}
-                <div
-                  className={`${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
-                >
-                  <div className="space-y-12">
-                    {/* Monthly Performance Chart */}
-                    <div>
-                      <div className="flex flex-col md:flex-row justify-between mb-6">
-                        <div>
-                          <h2 className={`text-xl font-semibold ${textColor}`}>
-                            Monthly Performance
-                          </h2>
-                          <p
-                            className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                          >
-                            Properties Sold and Rented
-                          </p>
+                
+                {/* Top Metrics Row */}
+                <div className="metrics">
+                  <div className="grid grid-cols-3 gap-6 h-full">
+                    {/* Total Revenue */}
+                    <div className="dashboard-card">
+                      <div className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}>
+                        <div className="text-slate-400 text-xs">Total Revenue</div>
+                        <div className="text-2xl font-bold animate-fade-in">$498,250</div>
+                        <div className="text-green-400 text-xs flex items-center">
+                          <TrendingUp size={12} className="mr-1" />
+                          15% vs last year
                         </div>
-                        <div className="text-sm font-medium mt-4 md:mt-0">
-                          <span className="inline-flex items-center mr-4">
-                            <span className="w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
-                            <span className={textColor}>Sales</span>
-                          </span>
-                          <span className="inline-flex items-center">
-                            <span className="w-3 h-3 rounded-full bg-emerald-400 mr-2"></span>
-                            <span className={textColor}>Rentals</span>
-                          </span>
-                        </div>
-                      </div>
-                      <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={data} margin={{ left: 10 }}>
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              stroke={gridColor}
-                              vertical={false}
-                            />
-                            <XAxis
-                              dataKey="date"
-                              stroke={labelColor}
-                              tickLine={false}
-                              axisLine={{ stroke: gridColor }}
-                            />
-                            <YAxis
-                              stroke={labelColor}
-                              tickLine={false}
-                              axisLine={{ stroke: gridColor }}
-                              label={{
-                                value: "Number of Properties",
-                                angle: -90,
-                                position: "insideLeft",
-                                offset: 0, // Adjust Y-axis label position
-                                style: {
-                                  fill: labelColor,
-                                  textAnchor: "middle",
-                                },
-                              }}
-                            />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Bar dataKey="sales" stackId="a" fill="#60a5fa" />
-                            <Bar dataKey="rentals" stackId="a" fill="#34d399" />
-                          </BarChart>
-                        </ResponsiveContainer>
                       </div>
                     </div>
-
-                    {/* Commission Performance Chart */}
-                    <div>
-                      <div className="flex flex-col md:flex-row justify-between mb-6">
-                        <div>
-                          <h2 className={`text-xl font-semibold ${textColor}`}>
-                            Commission Performance
-                          </h2>
-                          <p
-                            className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
-                          >
-                            Actual vs Target ($)
-                          </p>
-                        </div>
-                        <div className="text-sm font-medium mt-4 md:mt-0">
-                          <span className="inline-flex items-center mr-4">
-                            <span className="w-3 h-3 rounded-full bg-purple-400 mr-2"></span>
-                            <span className={textColor}>Actual Commission</span>
-                          </span>
-                          <span className="inline-flex items-center">
-                            <span className="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>
-                            <span className={textColor}>Target</span>
-                          </span>
+                    
+                    {/* Avg Transaction */}
+                    <div className="dashboard-card">
+                      <div className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}>
+                        <div className="text-slate-400 text-xs">Avg. Transaction</div>
+                        <div className="text-2xl font-bold animate-fade-in">$849,600</div>
+                        <div className="text-green-400 text-xs flex items-center">
+                          <TrendingUp size={12} className="mr-1" />
+                          8% vs last year
                         </div>
                       </div>
-                      <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart
-                            data={commissionData}
-                            margin={{ left: 10 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              stroke={gridColor}
-                              vertical={false}
-                            />
-                            <XAxis
-                              dataKey="month"
-                              stroke={labelColor}
-                              tickLine={false}
-                              axisLine={{ stroke: gridColor }}
-                            />
-                            <YAxis
-                              stroke={labelColor}
-                              tickLine={false}
-                              axisLine={{ stroke: gridColor }}
-                              tickFormatter={(value) => `$${value / 1000}k`}
-                              label={{
-                                value: "Commission Amount ($)",
-                                angle: -90,
-                                position: "insideLeft",
-                                offset: 0, // Adjust Y-axis label position
-                                style: {
-                                  fill: labelColor,
-                                  textAnchor: "middle",
-                                },
-                              }}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: isDarkMode
-                                  ? "#1f1f1f"
-                                  : "#fff",
-                                borderColor: gridColor,
-                              }}
-                              formatter={(value: number) => [
-                                `$${value.toLocaleString()}`,
-                                "",
-                              ]}
-                              labelStyle={{
-                                color: isDarkMode ? "#fff" : "#000",
-                              }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="actual"
-                              name="Actual Commission"
-                              stroke="#c084fc"
-                              strokeWidth={2}
-                              dot={{ fill: "#c084fc" }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="target"
-                              name="Target"
-                              stroke="#9ca3af"
-                              strokeWidth={2}
-                              strokeDasharray="5 5"
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
+                    </div>
+                    
+                    {/* Total Properties */}
+                    <div className="dashboard-card">
+                      <div className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}>
+                        <div className="text-slate-400 text-xs">Total Properties</div>
+                        <div className="text-2xl font-bold animate-fade-in">114</div>
+                        <div className="flex text-xs gap-2">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
+                            <span className="text-blue-400">37 Sold</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-purple-500 mr-1"></div>
+                            <span className="text-purple-400">77 Rented</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Recent Events Section */}
-              <div className="lg:col-span-1">
-                <div
-                  className={`${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
-                >
-                  <h2 className={`text-xl font-semibold mb-6 ${textColor}`}>
-                    Recent Events
-                  </h2>
-                  <RecentEvents events={recentEvents} isDarkMode={isDarkMode} />
+                
+                {/* Commission Claims */}
+                <div className="commission-claims">
+                  <CommissionClaimsCard progress={commissionProgress} />
+                </div>
+                
+                {/* Yearly Sales Transactions */}
+                <div className="yearly-sales">
+                  <div className="dashboard-card">
+                    <div className="p-4 pb-0">
+                      <div className="flex justify-between items-center">
+                        <div className="text-lg font-semibold">Yearly Sales Transactions</div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="text-sm text-slate-400">
+                        Monthly performance for 2023
+                      </div>
+                    </div>
+                    <div className="p-4 pt-3">
+                      <LineChartPulse data={yearlySalesData} height="h-56" />
+                      <div className="flex justify-between text-sm pt-2">
+                        <div className="flex items-center">
+                          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-400 mr-2"></div>
+                          <span>Total: {yearlySalesData.reduce((sum, item) => sum + item.value, 0)} Properties</span>
+                        </div>
+                        <div className="text-green-400 font-medium">
+                          +23% from previous year
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Sales Transaction */}
+                <div className="sales-transaction">
+                  <div className="dashboard-card">
+                    <div className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div className="text-base font-semibold">Sales Transaction</div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-slate-400">Monthly Goal</div>
+                          <div className="text-sm font-medium">{salesProgress}%</div>
+                        </div>
+                        {renderSegments(salesProgress, 100)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Recent Activity */}
+                <div className="recent-activity">
+                  <div className="dashboard-card h-full flex flex-col">
+                    <div className="p-4 pb-2 border-b border-slate-800 flex-shrink-0">
+                      <div className="flex justify-between items-center">
+                        <div className="text-base font-semibold">Recent Activity</div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-4 pt-2 flex-grow flex flex-col">
+                      <div className="recent-activity-items flex-grow">
+                        <div className="grid grid-cols-1 gap-3">
+                          {recentActivity.map((activity, index) => (
+                            <div key={index} className="flex items-center p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
+                              <Avatar className="h-8 w-8 mr-2.5 bg-slate-700">
+                                <AvatarFallback className="text-[10px]">
+                                  {activity.agent.split(' ').map(name => name[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 text-sm">
+                                <div className="font-medium">{activity.agent}</div>
+                                <div className="text-slate-400 mt-0.5">
+                                  <span className={activity.action === "Sold" ? "text-green-400" : "text-blue-400"}>
+                                    {activity.action}
+                                  </span>
+                                  {" "}{activity.property} • {activity.value}
+                                </div>
+                              </div>
+                              <div className="text-slate-400 text-xs">{activity.time}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="pt-3 mt-auto flex-shrink-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full text-sm border-slate-700 hover:bg-slate-700/50" 
+                          onClick={() => setShowMoreActivity(true)}
+                        >
+                          View all activity
+                          <ChevronDown size={14} className="ml-2" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Upcoming Appointments */}
+                <div className="upcoming-appointments">
+                  <UpcomingAppointmentsCard />
                 </div>
               </div>
             </div>
