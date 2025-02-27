@@ -14,8 +14,8 @@ interface LineChartPulseProps {
 
 export function LineChartPulse({ data, height = "h-72" }: LineChartPulseProps) {
   let xScale = scaleTime()
-    .domain([data[0].date, data[data.length - 1].date])
-    .range([0, 100]);
+  .domain([data[0]?.date ?? new Date(), data[data.length - 1]?.date ?? new Date()])
+  .range([0, 100]);
   let yScale = scaleLinear()
     .domain([0, max(data.map((d) => d.value)) ?? 0])
     .range([100, 0]);
@@ -86,10 +86,11 @@ export function LineChartPulse({ data, height = "h-72" }: LineChartPulseProps) {
         <div
           className="absolute size-3"
           style={{
-            left: `${xScale(data[data.length - 1].date)}%`,
-            top: `${yScale(data[data.length - 1].value)}%`,
+            left: `${xScale(data[data.length - 1]?.date ?? new Date())}%`,
+            top: `${yScale(data[data.length - 1]?.value ?? 0)}%`,
             transform: "translate(-50%, -50%)",
           }}
+          
         >
           <div className="absolute inset-0 animate-ping rounded-full bg-blue-400/30"></div>
           <div className="absolute inset-0 rounded-full bg-blue-400 border-2 border-blue-500"></div>

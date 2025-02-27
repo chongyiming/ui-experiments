@@ -292,8 +292,6 @@
 
 .upcoming-appointments { 
   grid-area: upcoming-appointments;
-  height: 100%;
-  margin-top: -10px; /* Add negative margin to move it upward closer to sales-transaction */
 }
 
 /* Add custom height for the Upcoming Appointments specifically to fill the gap */
