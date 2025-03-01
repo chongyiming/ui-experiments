@@ -15,13 +15,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Building, DollarSign, FileText, ChartBar, Bell, X, CalendarDays, Users, CheckCircle, Clock, TrendingUp, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
@@ -52,6 +52,14 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isAddRoleDialogOpen, setIsAddRoleDialogOpen] = useState(false); // New state for Add Role dialog
+  const [newRole, setNewRole] = useState<Partial<Role>>({ // New state for the new role
+    role_name: "",
+    dashboard: false,
+    contacts: false,
+    manage_role: false,
+  });
 
   useEffect(() => {
     // Fetch roles from your API or Supabase
@@ -69,17 +77,41 @@ export default function Page() {
   }, []);
 
   const handleEditRole = (role: Role) => {
-    // Handle edit role logic
-    console.log("Edit role:", role);
     setSelectedRole(role);
+    setIsEditMode(true);
     setIsDialogOpen(true);
   };
 
   const handleViewRole = (role: Role) => {
-    // Handle view role logic
-    console.log("View role:", role);
     setSelectedRole(role);
+    setIsEditMode(false);
     setIsDialogOpen(true);
+  };
+
+  const handleAddRole = () => {
+    setIsAddRoleDialogOpen(true); // Open the Add Role dialog
+  };
+
+  const handleSaveNewRole = async () => {
+    if (!newRole.role_name) {
+      alert("Role name is required!");
+      return;
+    }
+
+    // Save the new role to Supabase
+    const { data, error } = await supabase
+      .from("Permissions")
+      .insert([newRole])
+      .select();
+
+    if (error) {
+      console.error("Error adding role:", error);
+    } else {
+      console.log("Role added successfully:", data);
+      setIsAddRoleDialogOpen(false);
+      setNewRole({ role_name: "", dashboard: false, contacts: false, manage_role: false }); // Reset form
+      window.location.reload(); // Refresh the page to show the new role
+    }
   };
 
   const filteredRoles = roles.filter((role) =>
@@ -124,7 +156,9 @@ export default function Page() {
                 Manage roles to control access and permissions for different users within the application. You can create, edit, or delete roles as needed.
               </p>
             </div>
-            <Button className="px-3">Add Role</Button>
+            <Button className="px-3" onClick={handleAddRole}>
+              Add Role
+            </Button>
           </div>
           <div className="flex flex-col gap-4">
             <Input
@@ -170,63 +204,139 @@ export default function Page() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="read"
+                id="dashboard"
                 checked={selectedRole?.dashboard || false}
                 onCheckedChange={(checked) => {
                   if (selectedRole) {
                     setSelectedRole({ ...selectedRole, dashboard: !!checked });
                   }
                 }}
+                disabled={!isEditMode}
               />
-              <label htmlFor="read" className="text-sm">
+              <label htmlFor="dashboard" className="text-sm">
                 Dashboard
               </label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="admin"
+                id="contacts"
                 checked={selectedRole?.contacts || false}
                 onCheckedChange={(checked) => {
                   if (selectedRole) {
                     setSelectedRole({ ...selectedRole, contacts: !!checked });
                   }
                 }}
+                disabled={!isEditMode}
               />
-              <label htmlFor="admin" className="text-sm">
+              <label htmlFor="contacts" className="text-sm">
                 Contacts
               </label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="admin"
+                id="manage_role"
                 checked={selectedRole?.manage_role || false}
                 onCheckedChange={(checked) => {
                   if (selectedRole) {
                     setSelectedRole({ ...selectedRole, manage_role: !!checked });
                   }
                 }}
+                disabled={!isEditMode}
               />
-              <label htmlFor="admin" className="text-sm">
+              <label htmlFor="manage_role" className="text-sm">
                 Manage Role
               </label>
             </div>
           </div>
-          
+
+          {isEditMode && (
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (selectedRole) {
+                    // Save the updated role permissions to Supabase
+                    const { error } = await supabase
+                      .from("Permissions")
+                      .update(selectedRole)
+                      .eq("id", selectedRole.id);
+
+                    if (error) {
+                      console.error("Error updating role:", error);
+                    } else {
+                      console.log("Role updated successfully:", selectedRole);
+                      window.location.reload();
+                    }
+                  }
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Role Dialog */}
+      <Dialog open={isAddRoleDialogOpen} onOpenChange={setIsAddRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Role Name"
+              value={newRole.role_name}
+              onChange={(e) =>
+                setNewRole({ ...newRole, role_name: e.target.value })
+              }
+            />
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="new-dashboard"
+                  checked={newRole.dashboard || false}
+                  onCheckedChange={(checked) =>
+                    setNewRole({ ...newRole, dashboard: !!checked })
+                  }
+                />
+                <label htmlFor="new-dashboard" className="text-sm">
+                  Dashboard
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="new-contacts"
+                  checked={newRole.contacts || false}
+                  onCheckedChange={(checked) =>
+                    setNewRole({ ...newRole, contacts: !!checked })
+                  }
+                />
+                <label htmlFor="new-contacts" className="text-sm">
+                  Contacts
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="new-manage_role"
+                  checked={newRole.manage_role || false}
+                  onCheckedChange={(checked) =>
+                    setNewRole({ ...newRole, manage_role: !!checked })
+                  }
+                />
+                <label htmlFor="new-manage_role" className="text-sm">
+                  Manage Role
+                </label>
+              </div>
+            </div>
+          </div>
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddRoleDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                if (selectedRole) {
-                  // Save the updated role permissions (e.g., call an API or update state)
-                  console.log("Updated role:", selectedRole);
-                  setIsDialogOpen(false);
-                }
-              }}
-            >
-              Save
-            </Button>
+            <Button onClick={handleSaveNewRole}>Save</Button>
           </div>
         </DialogContent>
       </Dialog>
