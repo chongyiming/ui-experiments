@@ -20,7 +20,20 @@ export default function Page() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-
+  const getBaseUrl = () => {
+    // Check if running in the browser
+    if (typeof window !== "undefined") {
+      return window.location.origin; // Returns the current origin (e.g., http://localhost:3000 or https://your-vercel-app.vercel.app)
+    }
+  
+    // Check if running on Vercel
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`; // Returns the Vercel deployment URL
+    }
+  
+    // Default to localhost for development
+    return "http://localhost:3001";
+  };
   // Validate email and password
   const validateInputs = () => {
     if (!email || !password) {
@@ -123,6 +136,27 @@ export default function Page() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
+  
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getBaseUrl()}/reset-password`, // Dynamically set the redirect URL
+      });
+  
+      if (error) {
+        setError(error.message);
+      } else {
+        setError("Password reset email sent. Please check your inbox.");
+      }
+    } catch (error) {
+      console.error("Error sending reset password email:", error);
+      setError("An error occurred while sending the reset password email.");
+    }
+  };
   return (
     <Dialog open={true}>
       <DialogContent>
@@ -183,9 +217,16 @@ export default function Page() {
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex justify-between gap-2">
-            <a className="text-sm underline hover:no-underline" href="">
-              Forgot password?
-            </a>
+          <a
+  className="text-sm underline hover:no-underline"
+  href="#"
+  onClick={(e) => {
+    e.preventDefault();
+    handleForgotPassword();
+  }}
+>
+  Forgot password?
+</a>
           </div>
           <Button type="submit" className="w-full">
             Sign in
