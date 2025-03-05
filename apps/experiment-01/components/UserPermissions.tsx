@@ -1,10 +1,12 @@
-// useUserPermissions.js
+"use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../app/supabaseClient";
 
 export function useUserPermissions() {
   const [userId, setUserId] = useState("");
   const [perm, setPerm] = useState("");
+  const [id, setId] = useState("");
+  const [perms, setPermissions] = useState("");
   const [read, setRead] = useState(false);
 
   useEffect(() => {
@@ -22,8 +24,11 @@ export function useUserPermissions() {
   useEffect(() => {
     if (userId) {
       getInfo(userId);
+      getId(userId);
     }
   }, [userId]);
+
+
 
   useEffect(() => {
     if (perm) {
@@ -31,7 +36,7 @@ export function useUserPermissions() {
     }
   }, [perm]);
 
-  async function getInfo(userId: string) {
+  async function getInfo(userId: any) {
     try {
       const { data: agentData, error: agentError } = await supabase
         .from("Agents")
@@ -54,16 +59,20 @@ export function useUserPermissions() {
     }
   }
 
-  async function getPerm(perm: string) {
+  async function getId(userId: any) {
     try {
       const { data: agentData, error: agentError } = await supabase
-        .from("Permissions")
-        .select("read")
-        .eq("id", perm)
+        .from("Agents")
+        .select("id")
+        .eq("user_id", userId)
         .single();
 
+      if (agentError) {
+        throw new Error(agentError.message);
+      }
+
       if (agentData) {
-        setRead(agentData.read);
+        setId(agentData.id);
       }
 
       return agentData;
@@ -73,5 +82,24 @@ export function useUserPermissions() {
     }
   }
 
-  return { perm, read };
+  async function getPerm(perm: any) {
+    try {
+      const { data: agentData, error: agentError } = await supabase
+        .from("Permissions")
+        .select("*")
+        .eq("id", perm)
+        .single();
+
+      if (agentData) {
+        setPermissions(agentData);
+      }
+
+      return agentData;
+    } catch (error) {
+      console.error("Error fetching permission info:", error);
+      throw error;
+    }
+  }
+
+  return { userId, perms, id };
 }

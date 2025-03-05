@@ -123,8 +123,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [userId, setUserId] = useState("");
   const [perm, setPerm] = useState("");
   const [read,setRead] = useState(false)
-  console.log("Perm",perm)
-  console.log("Read",read)
+  // console.log("Perm",perm)
+  // console.log("Read",read)
 
   useEffect(() => {
     const authToken = localStorage.getItem(
