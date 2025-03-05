@@ -363,7 +363,7 @@ export default function ContactsTable() {
               ...agent,
               image: "/default-profile.jpg", // Fallback to default image
               referral: {
-                name: "Unknown",
+                name: "-",
                 image: "/profile.jpg", // Default referral image
               },
             };
@@ -425,9 +425,9 @@ export default function ContactsTable() {
       const transformedData = agentsWithImages.map((agent) => ({
         id: agent.user_id || "unknown",
         image: agent.image,
-        name: agent.username || "Unknown",
+        name: agent.username || "-",
         status: "Active",
-        location: "Unknown",
+        location: "-",
         verified: agent.ren,
         referral: agent.referral,
         value: 0,
