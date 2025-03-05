@@ -81,6 +81,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   const [isBuyerDropdownVisible, setIsBuyerDropdownVisible] = useState(false);
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>("");
   const [isAddBuyerDialogOpen, setIsAddBuyerDialogOpen] = useState(false);
+  const [showCoBrokeSection, setShowCoBrokeSection] = useState(false);
   const [newBuyer, setNewBuyer] = useState<{
     full_name: string;
     email: string;
@@ -92,6 +93,19 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     phone: "",
     referred_by: 0,
   });
+  console.log("userId", userId);
+  console.log("commission", commission);
+
+  useEffect(() => {
+    if (!showCoBrokeSection) {
+      setSelectedAgentId("");
+      setFormData((prev) => ({
+        ...prev,
+        commissionSplit: "0", // Reset commission split
+        cobroke_commission_amount: "0", // Reset co-broke commission amount
+      }));
+    }
+  }, [showCoBrokeSection]);
 
   useEffect(() => {
     if (id) {
@@ -308,8 +322,8 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
       const fullCommissionAmount =
         transactionPrice * propertiesCommission * agentCommission;
 
-      if (selectedAgentId) {
-        // If there is a co-broke agent, calculate the split
+      if (showCoBrokeSection && selectedAgentId) {
+        // If co-broke section is visible and a co-broke agent is selected, calculate the split
         const commissionSplit = parseFloat(formData.commissionSplit) || 100;
         const primaryAgentShare =
           fullCommissionAmount * ((100 - commissionSplit) / 100);
@@ -322,11 +336,11 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
           cobroke_commission_amount: cobrokeAgentShare.toFixed(2),
         }));
       } else {
-        // If there is no co-broke agent, the primary agent gets the full commission
+        // If co-broke section is hidden or no co-broke agent is selected, the primary agent gets the full commission
         setFormData((prev) => ({
           ...prev,
           commissionAmount: fullCommissionAmount.toFixed(2),
-          cobroke_commission_amount: "0",
+          cobroke_commission_amount: "0", // Reset co-broke commission amount
         }));
       }
     }
@@ -336,6 +350,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     commission,
     selectedAgentId,
     formData.commissionSplit,
+    showCoBrokeSection, // Add showCoBrokeSection to the dependency array
   ]);
 
   const handlePropertySelect = (propertyId: string) => {
@@ -432,7 +447,6 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
               : "Individual Property"}{" "}
             Transaction
           </h2>
-
           {/* Basic Project Details */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Project Details</h3>
@@ -493,7 +507,6 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
               )}
             </div>
           </div>
-
           {/* Transaction Details */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Transaction Details</h3>
@@ -642,7 +655,6 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
               </div>
             )}
           </div>
-
           {/* Buyer Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Buyer Information</h3>
@@ -756,50 +768,80 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
               </div>
             </div>
           </div>
-
           {/* Co-Broke Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Co-Broke Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Select Co-Broke Agent */}
-              <div className="space-y-2">
-                <Label htmlFor="cobrokeAgentSearch">
-                  Select Co-Broke Agent
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="cobrokeAgentSearch"
-                    placeholder="Type to search co-broke agents..."
-                    value={agentSearchQuery}
-                    onChange={(e) => setAgentSearchQuery(e.target.value)}
-                    onFocus={() => setIsAgentDropdownVisible(true)}
-                    onBlur={() =>
-                      setTimeout(() => setIsAgentDropdownVisible(false), 100)
-                    }
-                  />
-                  {isAgentDropdownVisible && (
-                    <div className="absolute z-10 mt-2 w-full bg-background border border-muted rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {filteredCoBrokeAgents.map((agent) => (
-                        <div
-                          key={agent.id}
-                          className="p-2 hover:bg-muted cursor-pointer"
-                          onClick={() => {
-                            setSelectedAgentId(agent.id);
-                            setAgentSearchQuery(agent.username);
-                            setIsAgentDropdownVisible(false);
-                          }}
-                        >
-                          {agent.username}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Conditionally Render Commission Split and Commission Amount */}
-              {selectedAgentId && (
-                <>
+          <div className="space-y-4">
+            {/* Add the checkbox to toggle co-broke section visibility */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="showCoBrokeSection"
+                checked={showCoBrokeSection}
+                onChange={(e) => {
+                  setShowCoBrokeSection(e.target.checked);
+                  if (!e.target.checked) {
+                    // Reset co-broke fields when the checkbox is unchecked
+                    setSelectedAgentId("");
+                    setFormData((prev) => ({
+                      ...prev,
+                      commissionSplit: "0", // Reset commission split
+                      cobroke_commission_amount: "0", // Reset co-broke commission amount
+                    }));
+                  }
+                }}
+              />
+              <Label htmlFor="showCoBrokeSection">
+                Show Co-Broke Information
+              </Label>
+            </div>
+
+            {/* Conditionally render the co-broke section and title based on the checkbox state */}
+            {showCoBrokeSection && (
+              <>
+                {/* Co-Broke Details Title */}
+                <h3 className="text-lg font-medium">Co-Broke Details</h3>
+
+                {/* Co-Broke Section Content */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Select Co-Broke Agent */}
+                  <div className="space-y-2">
+                    <Label htmlFor="cobrokeAgentSearch">
+                      Select Co-Broke Agent
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="cobrokeAgentSearch"
+                        placeholder="Type to search co-broke agents..."
+                        value={agentSearchQuery}
+                        onChange={(e) => setAgentSearchQuery(e.target.value)}
+                        onFocus={() => setIsAgentDropdownVisible(true)}
+                        onBlur={() =>
+                          setTimeout(
+                            () => setIsAgentDropdownVisible(false),
+                            100
+                          )
+                        }
+                      />
+                      {isAgentDropdownVisible && (
+                        <div className="absolute z-10 mt-2 w-full bg-background border border-muted rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {filteredCoBrokeAgents.map((agent) => (
+                            <div
+                              key={agent.id}
+                              className="p-2 hover:bg-muted cursor-pointer"
+                              onClick={() => {
+                                setSelectedAgentId(agent.id);
+                                setAgentSearchQuery(agent.username);
+                                setIsAgentDropdownVisible(false);
+                              }}
+                            >
+                              {agent.username}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Commission Split (%) */}
                   <div className="space-y-2">
                     <Label htmlFor="commissionSplit">
@@ -837,11 +879,10 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
                       readOnly
                     />
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
-
           {/* Document Upload */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Documents</h3>
@@ -870,7 +911,6 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
               )}
             </div>
           </div>
-
           {/* Show More Details Button */}
           <Button
             type="button"
@@ -881,7 +921,6 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
               ? "Hide Additional Details"
               : "Show Additional Details"}
           </Button>
-
           {/* Additional Details (Optional) */}
           {showAdditionalFields && (
             <div className="space-y-4">
