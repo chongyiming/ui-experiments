@@ -431,6 +431,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         alert("Transaction created successfully!");
         onClose();
         addAgentCommission();
+        window.location.reload();
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -443,7 +444,9 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
       const { data: primaryAgent, error: primaryAgentFetchError } =
         await supabase
           .from("Agents")
-          .select("pending_commission, total_sales_volume")
+          .select(
+            "pending_commission, total_sales_volume, number_of_transactions"
+          )
           .eq("id", formData.agent_id)
           .single();
 
@@ -462,7 +465,8 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
       const newTotalSalesVolume =
         (primaryAgent.total_sales_volume || 0) +
         parseFloat(formData.transactionPrice);
-
+      const newNumberOfTransactions =
+        (primaryAgent.number_of_transactions || 0) + 1;
       // Update the primary agent's commission and sales volume
       const { data: primaryAgentData, error: primaryAgentUpdateError } =
         await supabase
@@ -470,6 +474,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
           .update({
             pending_commission: newPendingCommission,
             total_sales_volume: newTotalSalesVolume,
+            number_of_transactions: newNumberOfTransactions,
           })
           .eq("id", formData.agent_id);
 
@@ -492,7 +497,9 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         const { data: coBrokeAgent, error: coBrokeAgentFetchError } =
           await supabase
             .from("Agents")
-            .select("pending_commission, total_sales_volume")
+            .select(
+              "pending_commission, total_sales_volume,number_of_transactions"
+            )
             .eq("id", selectedAgentId)
             .single();
 
@@ -511,7 +518,8 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         const newCoBrokeTotalSalesVolume =
           (coBrokeAgent.total_sales_volume || 0) +
           parseFloat(formData.transactionPrice);
-
+        const newCoBrokeNumberOfTransactions =
+          (coBrokeAgent.number_of_transactions || 0) + 1;
         // Update the co-broke agent's commission and sales volume
         const { data: coBrokeAgentData, error: coBrokeAgentUpdateError } =
           await supabase
@@ -519,6 +527,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
             .update({
               pending_commission: newCoBrokePendingCommission,
               total_sales_volume: newCoBrokeTotalSalesVolume,
+              number_of_transactions: newCoBrokeNumberOfTransactions,
             })
             .eq("id", selectedAgentId);
 

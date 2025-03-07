@@ -64,6 +64,8 @@ import CommissionClaimsCard from "@/components/ui/CommissionClaimsCard";
 import UpcomingAppointmentsCard from "@/components/ui/UpcomingAppointmentsCard";
 import "@/components/index.css";
 import { useUserPermissions } from "@/components/UserPermissions";
+import { supabase } from "../supabaseClient";
+
 // Sample data for charts
 const yearlySalesData = [
   { date: new Date("2023-01-15"), value: 4 },
@@ -163,6 +165,10 @@ const Dashboard = () => {
   const [commissionProgress, setCommissionProgress] = useState(0);
   const [showMoreActivity, setShowMoreActivity] = useState(false);
   const { name } = useUserPermissions();
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalNumberOfTransactions, setTotalNumberOfTransactions] = useState(0);
+  const [averageRevenue, setAverageRevenue] = useState(0);
+
   console.log(name);
   // Greeting based on time of day
   const currentHour = new Date().getHours();
@@ -194,6 +200,29 @@ const Dashboard = () => {
   const textColor = isDarkMode ? "text-white" : "text-gray-900";
   const gridColor = isDarkMode ? "#333" : "#e5e7eb";
   const labelColor = isDarkMode ? "#888" : "#666";
+  const { userId, perms, id } = useUserPermissions();
+
+  useEffect(() => {
+    const fetchTotalSales = async () => {
+      const { data, error } = await supabase
+        .from("Agents")
+        .select("total_sales_volume,number_of_transactions")
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error fetching level:", error);
+      } else {
+        console.log("id and data", userId, data);
+        setTotalRevenue(data[0]?.total_sales_volume);
+        setTotalNumberOfTransactions(data[0]?.number_of_transactions);
+      }
+    };
+    fetchTotalSales();
+  }, [userId]);
+
+  useEffect(() => {
+    setAverageRevenue(totalRevenue / totalNumberOfTransactions);
+  }, [totalNumberOfTransactions, totalRevenue]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -464,7 +493,7 @@ const Dashboard = () => {
                           Total Revenue
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          $498,250
+                          ${totalRevenue}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
@@ -482,7 +511,7 @@ const Dashboard = () => {
                           Avg. Transaction
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          $849,600
+                          ${averageRevenue}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
@@ -500,7 +529,7 @@ const Dashboard = () => {
                           Total Properties
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          114
+                          {totalNumberOfTransactions}
                         </div>
                         <div className="flex text-xs gap-2">
                           <div className="flex items-center">
