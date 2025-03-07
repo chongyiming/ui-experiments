@@ -430,10 +430,114 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         console.log("Transaction created successfully:", data);
         alert("Transaction created successfully!");
         onClose();
+        addAgentCommission();
       }
     } catch (error) {
       console.error("Unexpected error:", error);
       alert("An unexpected error occurred. Please try again.");
+    }
+  };
+  const addAgentCommission = async () => {
+    try {
+      // Fetch the primary agent's current commission and sales volume
+      const { data: primaryAgent, error: primaryAgentFetchError } =
+        await supabase
+          .from("Agents")
+          .select("pending_commission, total_sales_volume")
+          .eq("id", formData.agent_id)
+          .single();
+
+      if (primaryAgentFetchError) {
+        console.error(
+          "Error fetching primary agent's data:",
+          primaryAgentFetchError
+        );
+        throw primaryAgentFetchError;
+      }
+
+      // Calculate new values for the primary agent
+      const newPendingCommission =
+        (primaryAgent.pending_commission || 0) +
+        parseFloat(formData.commissionAmount);
+      const newTotalSalesVolume =
+        (primaryAgent.total_sales_volume || 0) +
+        parseFloat(formData.transactionPrice);
+
+      // Update the primary agent's commission and sales volume
+      const { data: primaryAgentData, error: primaryAgentUpdateError } =
+        await supabase
+          .from("Agents")
+          .update({
+            pending_commission: newPendingCommission,
+            total_sales_volume: newTotalSalesVolume,
+          })
+          .eq("id", formData.agent_id);
+
+      if (primaryAgentUpdateError) {
+        console.error(
+          "Error updating primary agent's commission:",
+          primaryAgentUpdateError
+        );
+        throw primaryAgentUpdateError;
+      }
+
+      console.log(
+        "Primary agent's commission updated successfully:",
+        primaryAgentData
+      );
+
+      // If there is a co-broke agent, update their commission and sales volume as well
+      if (selectedAgentId && formData.cobroke_commission_amount) {
+        // Fetch the co-broke agent's current commission and sales volume
+        const { data: coBrokeAgent, error: coBrokeAgentFetchError } =
+          await supabase
+            .from("Agents")
+            .select("pending_commission, total_sales_volume")
+            .eq("id", selectedAgentId)
+            .single();
+
+        if (coBrokeAgentFetchError) {
+          console.error(
+            "Error fetching co-broke agent's data:",
+            coBrokeAgentFetchError
+          );
+          throw coBrokeAgentFetchError;
+        }
+
+        // Calculate new values for the co-broke agent
+        const newCoBrokePendingCommission =
+          (coBrokeAgent.pending_commission || 0) +
+          parseFloat(formData.cobroke_commission_amount);
+        const newCoBrokeTotalSalesVolume =
+          (coBrokeAgent.total_sales_volume || 0) +
+          parseFloat(formData.transactionPrice);
+
+        // Update the co-broke agent's commission and sales volume
+        const { data: coBrokeAgentData, error: coBrokeAgentUpdateError } =
+          await supabase
+            .from("Agents")
+            .update({
+              pending_commission: newCoBrokePendingCommission,
+              total_sales_volume: newCoBrokeTotalSalesVolume,
+            })
+            .eq("id", selectedAgentId);
+
+        if (coBrokeAgentUpdateError) {
+          console.error(
+            "Error updating co-broke agent's commission:",
+            coBrokeAgentUpdateError
+          );
+          throw coBrokeAgentUpdateError;
+        }
+
+        console.log(
+          "Co-broke agent's commission updated successfully:",
+          coBrokeAgentData
+        );
+      }
+    } catch (error) {
+      console.error("Unexpected error in addAgentCommission:", error);
+      throw error;
     }
   };
   return (

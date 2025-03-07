@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../app/supabaseClient";
+import { get } from "http";
 
 export function useUserPermissions() {
   const [userId, setUserId] = useState("");
@@ -8,9 +9,12 @@ export function useUserPermissions() {
   const [id, setId] = useState("");
   const [perms, setPermissions] = useState("");
   const [read, setRead] = useState(false);
+  const [name, setName] = useState("");
 
   useEffect(() => {
-    const authToken = localStorage.getItem("sb-velfmvmemrzurdweumyo-auth-token");
+    const authToken = localStorage.getItem(
+      "sb-velfmvmemrzurdweumyo-auth-token"
+    );
     if (authToken) {
       try {
         const parsedToken = JSON.parse(authToken);
@@ -25,10 +29,9 @@ export function useUserPermissions() {
     if (userId) {
       getInfo(userId);
       getId(userId);
+      getName(userId);
     }
   }, [userId]);
-
-
 
   useEffect(() => {
     if (perm) {
@@ -82,6 +85,26 @@ export function useUserPermissions() {
     }
   }
 
+  async function getName(userId: any) {
+    try {
+      const { data: agentData, error: agentError } = await supabase
+        .from("Agents")
+        .select("username")
+        .eq("user_id", userId)
+        .single();
+
+      if (agentData) {
+        // Set name to a specific property, e.g., username
+        setName(agentData.username);
+      }
+
+      return agentData;
+    } catch (error) {
+      console.error("Error fetching name:", error);
+      throw error;
+    }
+  }
+
   async function getPerm(perm: any) {
     try {
       const { data: agentData, error: agentError } = await supabase
@@ -101,5 +124,5 @@ export function useUserPermissions() {
     }
   }
 
-  return { userId, perms, id };
+  return { userId, perms, id, name };
 }

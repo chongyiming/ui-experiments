@@ -16,7 +16,7 @@ import {
   TrendingUp,
   Plus,
   MoreHorizontal,
-  ChevronDown
+  ChevronDown,
 } from "lucide-react";
 import TransactionForm from "@/components/transaction-form";
 import TransactionList from "@/components/transaction-list";
@@ -62,8 +62,8 @@ import { Progress } from "@/components/ui/progress";
 import { LineChartPulse } from "@/components/ui/LineChartPulse";
 import CommissionClaimsCard from "@/components/ui/CommissionClaimsCard";
 import UpcomingAppointmentsCard from "@/components/ui/UpcomingAppointmentsCard";
-import '@/components/index.css'
-
+import "@/components/index.css";
+import { useUserPermissions } from "@/components/UserPermissions";
 // Sample data for charts
 const yearlySalesData = [
   { date: new Date("2023-01-15"), value: 4 },
@@ -82,31 +82,88 @@ const yearlySalesData = [
 
 // Sample recent activity
 const recentActivity = [
-  { agent: "Sarah Lee", action: "Sold", property: "Parkview Heights", value: "$1.2M", time: "2h" },
-  { agent: "James Wong", action: "Rented", property: "Riverside Res.", value: "$3.6K", time: "1d" },
-  { agent: "Michael Chen", action: "Sold", property: "Lakeside Manor", value: "$2.5M", time: "2d" },
-  { agent: "Aisha Patel", action: "Rented", property: "Urban Lofts", value: "$5.2K", time: "3d" }
+  {
+    agent: "Sarah Lee",
+    action: "Sold",
+    property: "Parkview Heights",
+    value: "$1.2M",
+    time: "2h",
+  },
+  {
+    agent: "James Wong",
+    action: "Rented",
+    property: "Riverside Res.",
+    value: "$3.6K",
+    time: "1d",
+  },
+  {
+    agent: "Michael Chen",
+    action: "Sold",
+    property: "Lakeside Manor",
+    value: "$2.5M",
+    time: "2d",
+  },
+  {
+    agent: "Aisha Patel",
+    action: "Rented",
+    property: "Urban Lofts",
+    value: "$5.2K",
+    time: "3d",
+  },
 ];
 
 // Sample previous activity for the modal
 const previousActivity = [
-  { agent: "David Kim", action: "Sold", property: "Mountain View", value: "$1.8M", time: "4d" },
-  { agent: "Priya Singh", action: "Rented", property: "Downtown Condo", value: "$4.2K", time: "5d" },
-  { agent: "Carlos Rodriguez", action: "Sold", property: "Sunset Villa", value: "$3.1M", time: "1w" },
-  { agent: "Emma Wilson", action: "Rented", property: "Harbor Apartments", value: "$2.9K", time: "1w" },
-  { agent: "Alex Thompson", action: "Sold", property: "Maple Residences", value: "$2.2M", time: "2w" }
+  {
+    agent: "David Kim",
+    action: "Sold",
+    property: "Mountain View",
+    value: "$1.8M",
+    time: "4d",
+  },
+  {
+    agent: "Priya Singh",
+    action: "Rented",
+    property: "Downtown Condo",
+    value: "$4.2K",
+    time: "5d",
+  },
+  {
+    agent: "Carlos Rodriguez",
+    action: "Sold",
+    property: "Sunset Villa",
+    value: "$3.1M",
+    time: "1w",
+  },
+  {
+    agent: "Emma Wilson",
+    action: "Rented",
+    property: "Harbor Apartments",
+    value: "$2.9K",
+    time: "1w",
+  },
+  {
+    agent: "Alex Thompson",
+    action: "Sold",
+    property: "Maple Residences",
+    value: "$2.2M",
+    time: "2w",
+  },
 ];
 
 const Dashboard = () => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showMarketTypeDialog, setShowMarketTypeDialog] = useState(false);
-  const [selectedMarketType, setSelectedMarketType] = useState<"primary" | "secondary" | null>(null);
+  const [selectedMarketType, setSelectedMarketType] = useState<
+    "primary" | "secondary" | null
+  >(null);
   const [pinnedCards, setPinnedCards] = useState<number[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [salesProgress, setSalesProgress] = useState(0);
   const [commissionProgress, setCommissionProgress] = useState(0);
   const [showMoreActivity, setShowMoreActivity] = useState(false);
-
+  const { name } = useUserPermissions();
+  console.log(name);
   // Greeting based on time of day
   const currentHour = new Date().getHours();
   let greeting = "Good morning";
@@ -170,13 +227,13 @@ const Dashboard = () => {
           clearInterval(interval);
         }
       }, speed);
-      
+
       return interval;
     };
-    
+
     const salesInterval = animateProgress(setSalesProgress, 66);
     const commissionInterval = animateProgress(setCommissionProgress, 78, 15);
-    
+
     return () => {
       clearInterval(salesInterval);
       clearInterval(commissionInterval);
@@ -186,26 +243,22 @@ const Dashboard = () => {
   const renderSegments = (current: any, total: any, count = 10) => {
     const segments = [];
     const filledSegments = Math.floor((current / 100) * count);
-    
+
     for (let i = 0; i < count; i++) {
       segments.push(
         <div
           key={i}
           className={`h-1 w-full rounded-full transition-all duration-300 ${
-            i < filledSegments ? 'bg-blue-500' : 'bg-slate-700'
+            i < filledSegments ? "bg-blue-500" : "bg-slate-700"
           }`}
           style={{
             opacity: i < filledSegments ? 1 : 0.3,
-            transition: `opacity 300ms ease-out ${i * 50}ms, background-color 300ms ease-out`
+            transition: `opacity 300ms ease-out ${i * 50}ms, background-color 300ms ease-out`,
           }}
         />
       );
     }
-    return (
-      <div className="grid grid-cols-10 gap-1 w-full">
-        {segments}
-      </div>
-    );
+    return <div className="grid grid-cols-10 gap-1 w-full">{segments}</div>;
   };
 
   return (
@@ -292,37 +345,57 @@ const Dashboard = () => {
             <div className="bg-slate-900 rounded-lg shadow-lg w-full max-w-2xl">
               <div className="flex justify-between items-center p-4 border-b border-slate-800">
                 <h3 className="text-lg font-medium">All Recent Activity</h3>
-                <Button variant="ghost" size="icon" onClick={() => setShowMoreActivity(false)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMoreActivity(false)}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </div>
               <div className="p-4 max-h-[70vh] overflow-y-auto">
                 <div className="space-y-3">
-                  {[...recentActivity, ...previousActivity].map((activity, index) => (
-                    <div key={index} className="flex items-center py-2 border-b border-slate-800">
-                      <Avatar className="h-8 w-8 mr-3 bg-slate-700">
-                        <AvatarFallback>
-                          {activity.agent.split(' ').map(name => name[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="font-medium">{activity.agent}</div>
-                        <div className="text-slate-400">
-                          <span className={activity.action === "Sold" ? "text-green-400" : "text-blue-400"}>
-                            {activity.action}
-                          </span>
-                          {" "}{activity.property} • {activity.value}
+                  {[...recentActivity, ...previousActivity].map(
+                    (activity, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center py-2 border-b border-slate-800"
+                      >
+                        <Avatar className="h-8 w-8 mr-3 bg-slate-700">
+                          <AvatarFallback>
+                            {activity.agent
+                              .split(" ")
+                              .map((name) => name[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium">{activity.agent}</div>
+                          <div className="text-slate-400">
+                            <span
+                              className={
+                                activity.action === "Sold"
+                                  ? "text-green-400"
+                                  : "text-blue-400"
+                              }
+                            >
+                              {activity.action}
+                            </span>{" "}
+                            {activity.property} • {activity.value}
+                          </div>
+                        </div>
+                        <div className="text-slate-400 text-sm">
+                          {activity.time}
                         </div>
                       </div>
-                      <div className="text-slate-400 text-sm">{activity.time}</div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
               <div className="p-4 border-t border-slate-800">
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
+                <Button
+                  variant="outline"
+                  className="w-full"
                   onClick={() => setShowMoreActivity(false)}
                 >
                   Close
@@ -360,15 +433,16 @@ const Dashboard = () => {
           ) : (
             <div className="h-[calc(100vh-4rem)] overflow-auto pb-6">
               {/* CSS Grid Dashboard Layout */}
-              
-              
+
               <div className="grid-dashboard">
                 {/* Welcome Message */}
                 <div className="welcome">
-                  <div className={`dashboard-card ${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}>
+                  <div
+                    className={`dashboard-card ${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
+                  >
                     <div className="flex justify-between items-center">
                       <h2 className={`text-xl font-semibold ${textColor}`}>
-                        {greeting}, John
+                        {greeting}, {name}
                       </h2>
                       <Button onClick={handleNewTransaction}>
                         <Plus className="mr-2 h-4 w-4" />
@@ -377,39 +451,57 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Top Metrics Row */}
                 <div className="metrics">
                   <div className="grid grid-cols-3 gap-6 h-full">
                     {/* Total Revenue */}
                     <div className="dashboard-card">
-                      <div className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}>
-                        <div className="text-slate-400 text-xs">Total Revenue</div>
-                        <div className="text-2xl font-bold animate-fade-in">$498,250</div>
+                      <div
+                        className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
+                      >
+                        <div className="text-slate-400 text-xs">
+                          Total Revenue
+                        </div>
+                        <div className="text-2xl font-bold animate-fade-in">
+                          $498,250
+                        </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
                           15% vs last year
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Avg Transaction */}
                     <div className="dashboard-card">
-                      <div className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}>
-                        <div className="text-slate-400 text-xs">Avg. Transaction</div>
-                        <div className="text-2xl font-bold animate-fade-in">$849,600</div>
+                      <div
+                        className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
+                      >
+                        <div className="text-slate-400 text-xs">
+                          Avg. Transaction
+                        </div>
+                        <div className="text-2xl font-bold animate-fade-in">
+                          $849,600
+                        </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
                           8% vs last year
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Total Properties */}
                     <div className="dashboard-card">
-                      <div className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}>
-                        <div className="text-slate-400 text-xs">Total Properties</div>
-                        <div className="text-2xl font-bold animate-fade-in">114</div>
+                      <div
+                        className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
+                      >
+                        <div className="text-slate-400 text-xs">
+                          Total Properties
+                        </div>
+                        <div className="text-2xl font-bold animate-fade-in">
+                          114
+                        </div>
                         <div className="flex text-xs gap-2">
                           <div className="flex items-center">
                             <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
@@ -424,19 +516,25 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Commission Claims */}
                 <div className="commission-claims">
                   <CommissionClaimsCard progress={commissionProgress} />
                 </div>
-                
+
                 {/* Yearly Sales Transactions */}
                 <div className="yearly-sales">
                   <div className="dashboard-card">
                     <div className="p-4 pb-0">
                       <div className="flex justify-between items-center">
-                        <div className="text-lg font-semibold">Yearly Sales Transactions</div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                        <div className="text-lg font-semibold">
+                          Yearly Sales Transactions
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
@@ -449,7 +547,14 @@ const Dashboard = () => {
                       <div className="flex justify-between text-sm pt-2">
                         <div className="flex items-center">
                           <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-400 mr-2"></div>
-                          <span>Total: {yearlySalesData.reduce((sum, item) => sum + item.value, 0)} Properties</span>
+                          <span>
+                            Total:{" "}
+                            {yearlySalesData.reduce(
+                              (sum, item) => sum + item.value,
+                              0
+                            )}{" "}
+                            Properties
+                          </span>
                         </div>
                         <div className="text-green-400 font-medium">
                           +23% from previous year
@@ -458,35 +563,51 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Sales Transaction */}
                 <div className="sales-transaction">
                   <div className="dashboard-card">
                     <div className="p-4">
                       <div className="flex justify-between items-center">
-                        <div className="text-base font-semibold">Sales Transaction</div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                        <div className="text-base font-semibold">
+                          Sales Transaction
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
                       <div className="mt-2">
                         <div className="flex items-center justify-between">
-                          <div className="text-sm text-slate-400">Monthly Goal</div>
-                          <div className="text-sm font-medium">{salesProgress}%</div>
+                          <div className="text-sm text-slate-400">
+                            Monthly Goal
+                          </div>
+                          <div className="text-sm font-medium">
+                            {salesProgress}%
+                          </div>
                         </div>
                         {renderSegments(salesProgress, 100)}
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Recent Activity */}
                 <div className="recent-activity">
                   <div className="dashboard-card h-full flex flex-col">
                     <div className="p-4 pb-2 border-b border-slate-800 flex-shrink-0">
                       <div className="flex justify-between items-center">
-                        <div className="text-base font-semibold">Recent Activity</div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                        <div className="text-base font-semibold">
+                          Recent Activity
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
@@ -495,31 +616,47 @@ const Dashboard = () => {
                       <div className="recent-activity-items flex-grow">
                         <div className="grid grid-cols-1 gap-3">
                           {recentActivity.map((activity, index) => (
-                            <div key={index} className="flex items-center p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
+                            <div
+                              key={index}
+                              className="flex items-center p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+                            >
                               <Avatar className="h-8 w-8 mr-2.5 bg-slate-700">
                                 <AvatarFallback className="text-[10px]">
-                                  {activity.agent.split(' ').map(name => name[0]).join('')}
+                                  {activity.agent
+                                    .split(" ")
+                                    .map((name) => name[0])
+                                    .join("")}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1 text-sm">
-                                <div className="font-medium">{activity.agent}</div>
+                                <div className="font-medium">
+                                  {activity.agent}
+                                </div>
                                 <div className="text-slate-400 mt-0.5">
-                                  <span className={activity.action === "Sold" ? "text-green-400" : "text-blue-400"}>
+                                  <span
+                                    className={
+                                      activity.action === "Sold"
+                                        ? "text-green-400"
+                                        : "text-blue-400"
+                                    }
+                                  >
                                     {activity.action}
-                                  </span>
-                                  {" "}{activity.property} • {activity.value}
+                                  </span>{" "}
+                                  {activity.property} • {activity.value}
                                 </div>
                               </div>
-                              <div className="text-slate-400 text-xs">{activity.time}</div>
+                              <div className="text-slate-400 text-xs">
+                                {activity.time}
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                       <div className="pt-3 mt-auto flex-shrink-0">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full text-sm border-slate-700 hover:bg-slate-700/50" 
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-sm border-slate-700 hover:bg-slate-700/50"
                           onClick={() => setShowMoreActivity(true)}
                         >
                           View all activity
@@ -529,7 +666,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Upcoming Appointments */}
                 <div className="upcoming-appointments">
                   <UpcomingAppointmentsCard />
