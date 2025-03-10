@@ -78,11 +78,11 @@ const data = {
           url: "/managerole",
           icon: RiLoginCircleLine,
         },
-        {
-          title: "Integration",
-          url: "#",
-          icon: RiLoginCircleLine,
-        },
+        // {
+        //   title: "Integration",
+        //   url: "#",
+        //   icon: RiLoginCircleLine,
+        // },
         // {
         //   title: "Layouts",
         //   url: "#",
@@ -91,6 +91,11 @@ const data = {
         {
           title: "Reports",
           url: "/reports",
+          icon: RiLeafLine,
+        },
+        {
+          title: "Properties",
+          url: "/properties",
           icon: RiLeafLine,
         },
       ],
@@ -122,7 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
   const [userId, setUserId] = useState("");
   const [perm, setPerm] = useState("");
-  const [read,setRead] = useState(false)
+  const [read, setRead] = useState(false);
   // console.log("Perm",perm)
   // console.log("Read",read)
 
@@ -144,9 +149,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (userId || perm) {
       getInfo(userId); // Call getInfo only when userId is set
       getPerm(perm);
-
     }
-  }, [userId,perm]);
+  }, [userId, perm]);
 
   async function getInfo(userId: string) {
     try {
@@ -162,9 +166,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       // Set the form fields with the fetched data
       if (agentData) {
-
-        setPerm(agentData.perm)
-        
+        setPerm(agentData.perm);
       }
 
       console.log("Agent data fetched successfully:", agentData);
@@ -183,13 +185,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         .eq("id", perm)
         .single(); // Use .single() if you expect only one row
 
-
-
       // Set the form fields with the fetched data
       if (agentData) {
-
-        setRead(agentData.read)
-        
+        setRead(agentData.read);
       }
 
       console.log("Agent data fetched successfully:", agentData);
