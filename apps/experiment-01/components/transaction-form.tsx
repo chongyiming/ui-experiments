@@ -150,21 +150,21 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     }
   }, [id, userId]);
 
-  useEffect(() => {
-    const fetchCommission = async () => {
-      const { data, error } = await supabase
-        .from("AgentLevel")
-        .select("commission_rate")
-        .eq("id", currentLevel);
+  // useEffect(() => {
+  //   const fetchCommission = async () => {
+  //     const { data, error } = await supabase
+  //       .from("AgentLevel")
+  //       .select("commission_rate")
+  //       .eq("id", currentLevel);
 
-      if (error) {
-        console.error("Error fetching level:", error);
-      } else {
-        setCommission(data[0]?.commission_rate);
-      }
-    };
-    fetchCommission();
-  }, [currentLevel]);
+  //     if (error) {
+  //       console.error("Error fetching level:", error);
+  //     } else {
+  //       setCommission(data[0]?.commission_rate);
+  //     }
+  //   };
+  //   fetchCommission();
+  // }, [currentLevel]);
 
   useEffect(() => {
     const fetchProperties = async () => {

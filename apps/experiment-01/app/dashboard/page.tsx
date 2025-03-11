@@ -164,12 +164,12 @@ const Dashboard = () => {
   const [salesProgress, setSalesProgress] = useState(0);
   const [commissionProgress, setCommissionProgress] = useState(0);
   const [showMoreActivity, setShowMoreActivity] = useState(false);
-  const { name } = useUserPermissions();
+  // const { name } = useUserPermissions();
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalNumberOfTransactions, setTotalNumberOfTransactions] = useState(0);
   const [averageRevenue, setAverageRevenue] = useState(0);
+  const { userId, perms, id, name } = useUserPermissions();
 
-  console.log(name);
   // Greeting based on time of day
   const currentHour = new Date().getHours();
   let greeting = "Good morning";
@@ -200,7 +200,6 @@ const Dashboard = () => {
   const textColor = isDarkMode ? "text-white" : "text-gray-900";
   const gridColor = isDarkMode ? "#333" : "#e5e7eb";
   const labelColor = isDarkMode ? "#888" : "#666";
-  const { userId, perms, id } = useUserPermissions();
 
   useEffect(() => {
     const fetchTotalSales = async () => {
@@ -492,7 +491,7 @@ const Dashboard = () => {
                           Total Revenue
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          ${totalRevenue}
+                          RM {totalRevenue.toFixed(2)}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
@@ -510,7 +509,7 @@ const Dashboard = () => {
                           Avg. Transaction
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          ${averageRevenue}
+                          RM {averageRevenue.toFixed(2)}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
