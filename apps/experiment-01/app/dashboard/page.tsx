@@ -212,7 +212,6 @@ const Dashboard = () => {
       if (error) {
         console.error("Error fetching level:", error);
       } else {
-        console.log("id and data", userId, data);
         setTotalRevenue(data[0]?.total_sales_volume);
         setTotalNumberOfTransactions(data[0]?.number_of_transactions);
       }
