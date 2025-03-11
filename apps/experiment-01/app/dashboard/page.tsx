@@ -169,6 +169,7 @@ const Dashboard = () => {
   const [totalNumberOfTransactions, setTotalNumberOfTransactions] = useState(0);
   const [averageRevenue, setAverageRevenue] = useState(0);
   const { userId, perms, id, name } = useUserPermissions();
+  const [isLoading, setIsLoading] = useState(true);
 
   // Greeting based on time of day
   const currentHour = new Date().getHours();
@@ -203,6 +204,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchTotalSales = async () => {
+      setIsLoading(true); // Set loading to true when fetching starts
       const { data, error } = await supabase
         .from("Agents")
         .select("total_sales_volume,number_of_transactions")
@@ -211,9 +213,10 @@ const Dashboard = () => {
       if (error) {
         console.error("Error fetching level:", error);
       } else {
-        setTotalRevenue(data[0]?.total_sales_volume);
-        setTotalNumberOfTransactions(data[0]?.number_of_transactions);
+        setTotalRevenue(data[0]?.total_sales_volume || 0);
+        setTotalNumberOfTransactions(data[0]?.number_of_transactions || 0);
       }
+      setIsLoading(false); // Set loading to false when fetching is done
     };
     fetchTotalSales();
   }, [userId]);
@@ -491,7 +494,9 @@ const Dashboard = () => {
                           Total Revenue
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          RM {totalRevenue}
+                          {isLoading
+                            ? "Loading..."
+                            : `RM ${totalRevenue.toFixed(2)}`}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
@@ -509,7 +514,9 @@ const Dashboard = () => {
                           Avg. Transaction
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          RM {averageRevenue}
+                          {isLoading
+                            ? "Loading..."
+                            : `RM ${averageRevenue.toFixed(2)}`}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
@@ -527,7 +534,9 @@ const Dashboard = () => {
                           Total Properties
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          {totalNumberOfTransactions}
+                          {isLoading
+                            ? "Loading..."
+                            : `${totalNumberOfTransactions}`}
                         </div>
                         <div className="flex text-xs gap-2">
                           <div className="flex items-center">
