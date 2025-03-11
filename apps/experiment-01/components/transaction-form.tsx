@@ -311,7 +311,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   useEffect(() => {
     const transactionPrice = parseFloat(formData.transactionPrice) || 0;
     const propertiesCommission = selectedPropertyCommission / 100;
-    const agentCommission = commission;
+    const agentCommission = commission / 100;
 
     if (
       transactionPrice > 0 &&

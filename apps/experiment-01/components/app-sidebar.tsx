@@ -98,6 +98,11 @@ const data = {
           url: "/properties",
           icon: RiLeafLine,
         },
+        {
+          title: "Agent Level",
+          url: "/agent-level",
+          icon: RiLeafLine,
+        },
       ],
     },
     {

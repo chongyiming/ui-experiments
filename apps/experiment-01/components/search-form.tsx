@@ -13,9 +13,10 @@ export function SearchForm({ ...props }: React.ComponentProps<"form">) {
   const sidebarOptions = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Contacts", path: "/contact" },
-    // { label: "Integration", path: "1" },
+    { label: "Manage Role", path: "/managerole" },
     { label: "Reports", path: "/reports" },
     { label: "Properties", path: "/properties" },
+    { label: "Agent Level", path: "/agent-level" },
   ];
 
   const filteredOptions = sidebarOptions.filter((option) =>
