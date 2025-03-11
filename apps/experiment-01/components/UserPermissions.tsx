@@ -5,12 +5,15 @@ import { get } from "http";
 
 export function useUserPermissions() {
   const [userId, setUserId] = useState("");
-  const [perm, setPerm] = useState("");
   const [id, setId] = useState("");
-  const [perms, setPermissions] = useState("");
-  const [read, setRead] = useState(false);
+  const [perms, setPermissions] = useState({
+    dashboard: false,
+    contacts: false,
+  });
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Extract user ID from local storage auth token
   useEffect(() => {
     const authToken = localStorage.getItem(
       "sb-velfmvmemrzurdweumyo-auth-token"
@@ -25,104 +28,61 @@ export function useUserPermissions() {
     }
   }, []);
 
+  // Fetch agent info and permissions once we have the user ID
   useEffect(() => {
     if (userId) {
-      getInfo(userId);
-      getId(userId);
-      getName(userId);
+      const fetchAgentInfo = async () => {
+        setIsLoading(true);
+        try {
+          // Get agent details in a single query
+          const { data: agentData, error: agentError } = await supabase
+            .from("Agents")
+            .select("id, perm, username")
+            .eq("user_id", userId)
+            .single();
+
+          if (agentError) {
+            throw new Error(agentError.message);
+          }
+
+          if (agentData) {
+            setId(agentData.id);
+            setPermissions(agentData.perm);
+            setName(agentData.username);
+
+            // Fetch permissions immediately
+            if (agentData.perm) {
+              const { data: permData, error: permError } = await supabase
+                .from("Permissions")
+                .select("*")
+                .eq("id", agentData.perm)
+                .single();
+
+              if (permError) {
+                throw new Error(permError.message);
+              }
+
+              if (permData) {
+                setPermissions(permData);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching agent info:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchAgentInfo();
     }
   }, [userId]);
 
-  useEffect(() => {
-    if (perm) {
-      getPerm(perm);
-    }
-  }, [perm]);
-
-  async function getInfo(userId: any) {
-    try {
-      const { data: agentData, error: agentError } = await supabase
-        .from("Agents")
-        .select("perm")
-        .eq("user_id", userId)
-        .single();
-
-      if (agentError) {
-        throw new Error(agentError.message);
-      }
-
-      if (agentData) {
-        setPerm(agentData.perm);
-      }
-
-      return agentData;
-    } catch (error) {
-      console.error("Error fetching agent info:", error);
-      throw error;
-    }
-  }
-
-  async function getId(userId: any) {
-    try {
-      const { data: agentData, error: agentError } = await supabase
-        .from("Agents")
-        .select("id")
-        .eq("user_id", userId)
-        .single();
-
-      if (agentError) {
-        throw new Error(agentError.message);
-      }
-
-      if (agentData) {
-        setId(agentData.id);
-      }
-
-      return agentData;
-    } catch (error) {
-      console.error("Error fetching agent info:", error);
-      throw error;
-    }
-  }
-
-  async function getName(userId: any) {
-    try {
-      const { data: agentData, error: agentError } = await supabase
-        .from("Agents")
-        .select("username")
-        .eq("user_id", userId)
-        .single();
-
-      if (agentData) {
-        // Set name to a specific property, e.g., username
-        setName(agentData.username);
-      }
-
-      return agentData;
-    } catch (error) {
-      console.error("Error fetching name:", error);
-      throw error;
-    }
-  }
-
-  async function getPerm(perm: any) {
-    try {
-      const { data: agentData, error: agentError } = await supabase
-        .from("Permissions")
-        .select("*")
-        .eq("id", perm)
-        .single();
-
-      if (agentData) {
-        setPermissions(agentData);
-      }
-
-      return agentData;
-    } catch (error) {
-      console.error("Error fetching permission info:", error);
-      throw error;
-    }
-  }
-
-  return { userId, perms, id, name };
+  return {
+    userId,
+    id,
+    name,
+    perms,
+    isLoading,
+  };
 }
