@@ -491,7 +491,7 @@ const Dashboard = () => {
                           Total Revenue
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          RM {totalRevenue.toFixed(2)}
+                          RM {totalRevenue}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
@@ -509,7 +509,7 @@ const Dashboard = () => {
                           Avg. Transaction
                         </div>
                         <div className="text-2xl font-bold animate-fade-in">
-                          RM {averageRevenue.toFixed(2)}
+                          RM {averageRevenue}
                         </div>
                         <div className="text-green-400 text-xs flex items-center">
                           <TrendingUp size={12} className="mr-1" />
