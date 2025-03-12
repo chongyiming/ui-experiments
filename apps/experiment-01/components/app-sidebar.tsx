@@ -129,6 +129,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const handleSignOut = () => {
     router.push("/");
+    localStorage.removeItem("sb-velfmvmemrzurdweumyo-auth-token");
   };
   const [userId, setUserId] = useState("");
   const [perm, setPerm] = useState("");

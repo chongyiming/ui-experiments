@@ -25,12 +25,12 @@ export default function Page() {
     if (typeof window !== "undefined") {
       return window.location.origin; // Returns the current origin (e.g., http://localhost:3000 or https://your-vercel-app.vercel.app)
     }
-  
+
     // Check if running on Vercel
     if (process.env.VERCEL_URL) {
       return `https://${process.env.VERCEL_URL}`; // Returns the Vercel deployment URL
     }
-  
+
     // Default to localhost for development
     return "http://localhost:3001";
   };
@@ -111,7 +111,7 @@ export default function Page() {
         const { data: newPermissionData, error: newPermissionError } =
           await supabase
             .from("Agents")
-            .insert([{ gmail: email, perm: 0, user_id: userId, ren: true }]); // Now using userId from the session
+            .insert([{ gmail: email, perm: 3, user_id: userId, ren: true }]); // Now using userId from the session
 
         if (newPermissionError) {
           setError(newPermissionError.message);
@@ -141,12 +141,12 @@ export default function Page() {
       setError("Please enter your email address.");
       return;
     }
-  
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${getBaseUrl()}/reset-password`, // Dynamically set the redirect URL
       });
-  
+
       if (error) {
         setError(error.message);
       } else {
@@ -217,16 +217,16 @@ export default function Page() {
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex justify-between gap-2">
-          <a
-  className="text-sm underline hover:no-underline"
-  href="#"
-  onClick={(e) => {
-    e.preventDefault();
-    handleForgotPassword();
-  }}
->
-  Forgot password?
-</a>
+            <a
+              className="text-sm underline hover:no-underline"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleForgotPassword();
+              }}
+            >
+              Forgot password?
+            </a>
           </div>
           <Button type="submit" className="w-full">
             Sign in

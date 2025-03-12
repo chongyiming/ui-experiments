@@ -32,6 +32,7 @@ export default function UserDropdown() {
 
     // Redirect to home page
     router.push("/");
+    localStorage.removeItem("sb-velfmvmemrzurdweumyo-auth-token");
   };
 
   useEffect(() => {

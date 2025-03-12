@@ -93,13 +93,13 @@ type Item = {
   image: string;
   name: string;
   status: string;
-  location: string;
+  gmail: string; // Replace location with gmail
   verified: boolean;
   referral: {
     name: string;
     image: string;
   };
-  value: number;
+  approved_commission: number; // Replace value with approved_commission
   joinDate: string;
 };
 type AgentWithReferral = {
@@ -112,6 +112,9 @@ type AgentWithReferral = {
     name: string;
     image: string;
   };
+  perm: number;
+  gmail: string;
+  approved_commission: number; // Add approved_commission
 };
 const statusFilterFn: FilterFn<Item> = (
   row,
@@ -170,14 +173,7 @@ const getColumns = ({ data, setData }: GetColumnsProps): ColumnDef<Item>[] => [
     size: 180,
     enableHiding: false,
   },
-  // {
-  //   header: "ID",
-  //   accessorKey: "id",
-  //   cell: ({ row }) => (
-  //     <span className="text-muted-foreground">{row.getValue("id")}</span>
-  //   ),
-  //   size: 110,
-  // },
+
   {
     header: "Status",
     accessorKey: "status",
@@ -189,7 +185,9 @@ const getColumns = ({ data, setData }: GetColumnsProps): ColumnDef<Item>[] => [
             "gap-1 py-0.5 px-2 text-sm",
             row.original.status === "Inactive"
               ? "text-muted-foreground"
-              : "text-primary-foreground"
+              : row.original.status === "Pending"
+                ? "text-amber-500"
+                : "text-primary-foreground"
           )}
         >
           {row.original.status === "Active" && (
@@ -199,21 +197,28 @@ const getColumns = ({ data, setData }: GetColumnsProps): ColumnDef<Item>[] => [
               aria-hidden="true"
             />
           )}
+          {row.original.status === "Pending" && (
+            <RiErrorWarningLine
+              className="text-amber-500"
+              size={14}
+              aria-hidden="true"
+            />
+          )}
           {row.original.status === "Inactive" && "- "}
           {row.original.status}
         </Badge>
       </div>
     ),
-    size: 110,
-    filterFn: statusFilterFn,
   },
   {
-    header: "Location",
-    accessorKey: "location",
+    header: "Gmail",
+    accessorKey: "gmail",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.getValue("location")}</span>
+      <div className="w-full break-words">
+        <span className="text-muted-foreground">{row.getValue("gmail")}</span>
+      </div>
     ),
-    size: 140,
+    size: 180,
   },
   {
     header: "Verified",
@@ -256,20 +261,20 @@ const getColumns = ({ data, setData }: GetColumnsProps): ColumnDef<Item>[] => [
     size: 140,
   },
   {
-    header: "Value",
-    accessorKey: "value",
+    header: "Commission",
+    accessorKey: "approved_commission",
     cell: ({ row }) => {
-      const value = row.getValue("value") as number;
+      const approvedCommission = row.getValue("approved_commission") as number;
       return (
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex h-full w-full items-center">
-                <Progress className="h-1 max-w-14" value={value} />
+                <Progress className="h-1 max-w-14" value={approvedCommission} />
               </div>
             </TooltipTrigger>
             <TooltipContent align="start" sideOffset={-8}>
-              <p>{value}%</p>
+              <p>{approvedCommission}%</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -310,22 +315,6 @@ export default function ContactsTable() {
 
   const columns = useMemo(() => getColumns({ data, setData }), [data]);
 
-  // useEffect(() => {
-  //   async function fetchPosts() {
-  //     try {
-  //       const res = await fetch(
-  //         "https://res.cloudinary.com/dlzlfasou/raw/upload/users-02_mohkpe.json"
-  //       );
-  //       const data = await res.json();
-  //       setData(data);
-  //     } catch (error) {
-  //       console.error("Error fetching data:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   }
-  //   fetchPosts();
-  // }, []);
   useEffect(() => {
     getAgentsWithImages();
   }, []);
@@ -335,7 +324,9 @@ export default function ContactsTable() {
       // Fetch all agents
       const { data: agentsData, error: agentsError } = await supabase
         .from("Agents")
-        .select("user_id, username, ren, referrer_id");
+        .select(
+          "user_id, username, ren, referrer_id,perm, gmail,approved_commission"
+        );
 
       if (agentsError) {
         throw agentsError;
@@ -426,14 +417,18 @@ export default function ContactsTable() {
         id: agent.user_id || "unknown",
         image: agent.image,
         name: agent.username || "-",
-        status: "Active",
-        location: "-",
+        status:
+          agent.perm === 0
+            ? "Inactive"
+            : agent.perm === 3
+              ? "Pending"
+              : "Active", // Corrected status logic
+        gmail: agent.gmail || "-", // Add gmail
         verified: agent.ren,
         referral: agent.referral,
-        value: 0,
+        approved_commission: agent.approved_commission || 0, // Add approved_commission
         joinDate: new Date().toISOString(),
       }));
-
       setData(transformedData);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -612,7 +607,7 @@ export default function ContactsTable() {
                   size={20}
                   aria-hidden="true"
                 />
-                Filter
+                Status Filter
                 {selectedStatuses.length > 0 && (
                   <span className="-me-1 ms-3 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
                     {selectedStatuses.length}
@@ -803,7 +798,6 @@ export default function ContactsTable() {
     </div>
   );
 }
-
 function RowActions({
   setData,
   data,
@@ -816,42 +810,64 @@ function RowActions({
   const [isUpdatePending, startUpdateTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const handleStatusToggle = () => {
-    startUpdateTransition(() => {
-      const updatedData = data.map((dataItem) => {
-        if (dataItem.id === item.id) {
-          return {
-            ...dataItem,
-            status: item.status === "Active" ? "Inactive" : "Active",
-          };
-        }
-        return dataItem;
+  const handleStatusToggle = async () => {
+    const newPerm =
+      item.status === "Active" ? 0 : item.status === "Pending" ? 1 : 3; // Toggle perm logic
+    try {
+      // Update the user's perm in the database
+      const { error } = await supabase
+        .from("Agents")
+        .update({ perm: newPerm })
+        .eq("user_id", item.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state to reflect the change
+      startUpdateTransition(() => {
+        const updatedData = data.map((dataItem) => {
+          if (dataItem.id === item.id) {
+            return {
+              ...dataItem,
+              status:
+                newPerm === 3
+                  ? "Pending"
+                  : newPerm === 0
+                    ? "Inactive"
+                    : "Active", // Update status based on perm
+            };
+          }
+          return dataItem;
+        });
+        setData(updatedData);
       });
-      setData(updatedData);
-    });
+    } catch (error) {
+      console.error("Error updating user perm:", error);
+    }
   };
 
-  const handleVerifiedToggle = () => {
-    startUpdateTransition(() => {
-      const updatedData = data.map((dataItem) => {
-        if (dataItem.id === item.id) {
-          return {
-            ...dataItem,
-            verified: !item.verified,
-          };
-        }
-        return dataItem;
-      });
-      setData(updatedData);
-    });
-  };
+  const handleDelete = async () => {
+    try {
+      // Delete the user from the Agents table in Supabase
+      const { error } = await supabase
+        .from("Agents")
+        .delete()
+        .eq("user_id", item.id);
 
-  const handleDelete = () => {
-    startUpdateTransition(() => {
-      const updatedData = data.filter((dataItem) => dataItem.id !== item.id);
-      setData(updatedData);
-      setShowDeleteDialog(false);
-    });
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state to remove the deleted row
+      startUpdateTransition(() => {
+        const updatedData = data.filter((dataItem) => dataItem.id !== item.id);
+        setData(updatedData);
+        setShowDeleteDialog(false);
+      });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   };
 
   return (
@@ -877,13 +893,9 @@ function RowActions({
             >
               {item.status === "Active"
                 ? "Deactivate contact"
-                : "Activate contact"}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleVerifiedToggle}
-              disabled={isUpdatePending}
-            >
-              {item.verified ? "Unverify contact" : "Verify contact"}
+                : item.status === "Pending"
+                  ? "Activate contact"
+                  : "Mark as Pending"}
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
