@@ -303,429 +303,435 @@ const Dashboard = () => {
   };
 
   return (
-    perms.dashboard && (
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset className="overflow-hidden px-4 md:px-6 lg:px-8">
-          {/* Header */}
-          <header className="border-b">
-            {/* Top Row: Breadcrumb and User Dropdown */}
-            <div className="flex h-16 shrink-0 items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 px-3">
-                <SidebarTrigger className="-ms-4" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">
-                        <RiScanLine size={22} aria-hidden="true" />
-                        <span className="sr-only">Dashboard</span>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-              <div className="flex gap-3 ml-auto">
-                <Button variant="ghost" size="icon">
-                  <Bell className="h-5 w-5" />
-                </Button>
-                <UserDropdown />
-              </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="overflow-hidden px-4 md:px-6 lg:px-8">
+        {/* Header */}
+        <header className="border-b">
+          {/* Top Row: Breadcrumb and User Dropdown */}
+          <div className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex flex-1 items-center gap-2 px-3">
+              <SidebarTrigger className="-ms-4" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">
+                      <RiScanLine size={22} aria-hidden="true" />
+                      <span className="sr-only">Dashboard</span>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-          </header>
-
-          {/* Market Type Selection Dialog */}
-          <Dialog
-            open={showMarketTypeDialog}
-            onOpenChange={setShowMarketTypeDialog}
-          >
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Select Market Type</DialogTitle>
-                <DialogDescription>
-                  Choose the type of property transaction you want to create
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid grid-cols-1 gap-4 py-4">
-                <Button
-                  variant="outline"
-                  className="h-24 flex flex-col items-center justify-center gap-2"
-                  onClick={() => handleMarketTypeSelect("primary")}
-                >
-                  <Building className="h-8 w-8" />
-                  <div>
-                    <p className="font-semibold">Primary Market</p>
-                    <p className="text-sm text-muted-foreground">
-                      Developer Projects
-                    </p>
-                  </div>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-24 flex flex-col items-center justify-center gap-2"
-                  onClick={() => handleMarketTypeSelect("secondary")}
-                >
-                  <FileText className="h-8 w-8" />
-                  <div>
-                    <p className="font-semibold">Secondary Market</p>
-                    <p className="text-sm text-muted-foreground">
-                      Individual Property
-                    </p>
-                  </div>
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Activity Modal */}
-          {showMoreActivity && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-slate-900 rounded-lg shadow-lg w-full max-w-2xl">
-                <div className="flex justify-between items-center p-4 border-b border-slate-800">
-                  <h3 className="text-lg font-medium">All Recent Activity</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowMoreActivity(false)}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-                <div className="p-4 max-h-[70vh] overflow-y-auto">
-                  <div className="space-y-3">
-                    {[...recentActivity, ...previousActivity].map(
-                      (activity, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center py-2 border-b border-slate-800"
-                        >
-                          <Avatar className="h-8 w-8 mr-3 bg-slate-700">
-                            <AvatarFallback>
-                              {activity.agent
-                                .split(" ")
-                                .map((name) => name[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="font-medium">{activity.agent}</div>
-                            <div className="text-slate-400">
-                              <span
-                                className={
-                                  activity.action === "Sold"
-                                    ? "text-green-400"
-                                    : "text-blue-400"
-                                }
-                              >
-                                {activity.action}
-                              </span>{" "}
-                              {activity.property} • {activity.value}
-                            </div>
-                          </div>
-                          <div className="text-slate-400 text-sm">
-                            {activity.time}
-                          </div>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-                <div className="p-4 border-t border-slate-800">
+            <div className="flex gap-3 ml-auto">
+              <Button variant="ghost" size="icon">
+                <Bell className="h-5 w-5" />
+              </Button>
+              <UserDropdown />
+            </div>
+          </div>
+        </header>
+        {/* Market Type Selection Dialog */}
+        {perms.dashboard && (
+          <div>
+            <Dialog
+              open={showMarketTypeDialog}
+              onOpenChange={setShowMarketTypeDialog}
+            >
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Select Market Type</DialogTitle>
+                  <DialogDescription>
+                    Choose the type of property transaction you want to create
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 gap-4 py-4">
                   <Button
                     variant="outline"
-                    className="w-full"
-                    onClick={() => setShowMoreActivity(false)}
+                    className="h-24 flex flex-col items-center justify-center gap-2"
+                    onClick={() => handleMarketTypeSelect("primary")}
                   >
-                    Close
+                    <Building className="h-8 w-8" />
+                    <div>
+                      <p className="font-semibold">Primary Market</p>
+                      <p className="text-sm text-muted-foreground">
+                        Developer Projects
+                      </p>
+                    </div>
                   </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Main Content */}
-          <div className="flex flex-1 flex-col gap-4 lg:gap-6 py-4 lg:py-6">
-            {showTransactionForm ? (
-              <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 overflow-y-auto">
-                <div className="min-h-screen px-4 py-8">
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-4 right-4"
-                    onClick={() => {
-                      setShowTransactionForm(false);
-                      setSelectedMarketType(null);
-                    }}
+                    variant="outline"
+                    className="h-24 flex flex-col items-center justify-center gap-2"
+                    onClick={() => handleMarketTypeSelect("secondary")}
                   >
-                    <X className="h-5 w-5" />
+                    <FileText className="h-8 w-8" />
+                    <div>
+                      <p className="font-semibold">Secondary Market</p>
+                      <p className="text-sm text-muted-foreground">
+                        Individual Property
+                      </p>
+                    </div>
                   </Button>
-                  <TransactionForm
-                    onClose={() => {
-                      setShowTransactionForm(false);
-                      setSelectedMarketType(null);
-                    }}
-                    marketType={selectedMarketType!}
-                  />
                 </div>
-              </div>
-            ) : (
-              <div className="h-[calc(100vh-4rem)] overflow-auto pb-6">
-                {/* CSS Grid Dashboard Layout */}
-
-                <div className="grid-dashboard">
-                  {/* Welcome Message */}
-                  <div className="welcome">
-                    <div
-                      className={`dashboard-card ${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
+              </DialogContent>
+            </Dialog>
+            {/* Activity Modal */}
+            {showMoreActivity && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-slate-900 rounded-lg shadow-lg w-full max-w-2xl">
+                  <div className="flex justify-between items-center p-4 border-b border-slate-800">
+                    <h3 className="text-lg font-medium">All Recent Activity</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowMoreActivity(false)}
                     >
-                      <div className="flex justify-between items-center">
-                        <h2 className={`text-xl font-semibold ${textColor}`}>
-                          {greeting}, {name}
-                        </h2>
-                        <Button onClick={handleNewTransaction}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Sales
-                        </Button>
-                      </div>
-                    </div>
+                      <X className="h-5 w-5" />
+                    </Button>
                   </div>
-
-                  {/* Top Metrics Row */}
-                  <div className="metrics">
-                    <div className="grid grid-cols-3 gap-6 h-full">
-                      {/* Total Revenue */}
-                      <div className="dashboard-card">
-                        <div
-                          className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
-                        >
-                          <div className="text-slate-400 text-xs">
-                            Total Revenue
-                          </div>
-                          <div className="text-2xl font-bold animate-fade-in">
-                            {isLoading
-                              ? "Loading..."
-                              : `RM ${totalRevenue.toFixed(2)}`}
-                          </div>
-                          <div className="text-green-400 text-xs flex items-center">
-                            <TrendingUp size={12} className="mr-1" />
-                            15% vs last year
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Avg Transaction */}
-                      <div className="dashboard-card">
-                        <div
-                          className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
-                        >
-                          <div className="text-slate-400 text-xs">
-                            Avg. Transaction
-                          </div>
-                          <div className="text-2xl font-bold animate-fade-in">
-                            {isLoading
-                              ? "Loading..."
-                              : `RM ${averageRevenue.toFixed(2)}`}
-                          </div>
-                          <div className="text-green-400 text-xs flex items-center">
-                            <TrendingUp size={12} className="mr-1" />
-                            8% vs last year
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Total Properties */}
-                      <div className="dashboard-card">
-                        <div
-                          className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
-                        >
-                          <div className="text-slate-400 text-xs">
-                            Total Properties
-                          </div>
-                          <div className="text-2xl font-bold animate-fade-in">
-                            {isLoading
-                              ? "Loading..."
-                              : `${totalNumberOfTransactions}`}
-                          </div>
-                          <div className="flex text-xs gap-2">
-                            <div className="flex items-center">
-                              <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
-                              <span className="text-blue-400">37 Sold</span>
-                            </div>
-                            <div className="flex items-center">
-                              <div className="w-2 h-2 rounded-full bg-purple-500 mr-1"></div>
-                              <span className="text-purple-400">77 Rented</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Commission Claims */}
-                  <div className="commission-claims">
-                    <CommissionClaimsCard progress={commissionProgress} />
-                  </div>
-
-                  {/* Yearly Sales Transactions */}
-                  <div className="yearly-sales">
-                    <div className="dashboard-card">
-                      <div className="p-4 pb-0">
-                        <div className="flex justify-between items-center">
-                          <div className="text-lg font-semibold">
-                            Yearly Sales Transactions
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400"
+                  <div className="p-4 max-h-[70vh] overflow-y-auto">
+                    <div className="space-y-3">
+                      {[...recentActivity, ...previousActivity].map(
+                        (activity, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center py-2 border-b border-slate-800"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="text-sm text-slate-400">
-                          Monthly performance for 2023
-                        </div>
-                      </div>
-                      <div className="p-4 pt-3">
-                        <LineChartPulse data={yearlySalesData} height="h-56" />
-                        <div className="flex justify-between text-sm pt-2">
-                          <div className="flex items-center">
-                            <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-400 mr-2"></div>
-                            <span>
-                              Total:{" "}
-                              {yearlySalesData.reduce(
-                                (sum, item) => sum + item.value,
-                                0
-                              )}{" "}
-                              Properties
-                            </span>
-                          </div>
-                          <div className="text-green-400 font-medium">
-                            +23% from previous year
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sales Transaction */}
-                  <div className="sales-transaction">
-                    <div className="dashboard-card">
-                      <div className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div className="text-base font-semibold">
-                            Sales Transaction
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-slate-400">
-                              Monthly Goal
-                            </div>
-                            <div className="text-sm font-medium">
-                              {salesProgress}%
-                            </div>
-                          </div>
-                          {renderSegments(salesProgress, 100)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Recent Activity */}
-                  <div className="recent-activity">
-                    <div className="dashboard-card h-full flex flex-col">
-                      <div className="p-4 pb-2 border-b border-slate-800 flex-shrink-0">
-                        <div className="flex justify-between items-center">
-                          <div className="text-base font-semibold">
-                            Recent Activity
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="p-4 pt-2 flex-grow flex flex-col">
-                        <div className="recent-activity-items flex-grow">
-                          <div className="grid grid-cols-1 gap-3">
-                            {recentActivity.map((activity, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
-                              >
-                                <Avatar className="h-8 w-8 mr-2.5 bg-slate-700">
-                                  <AvatarFallback className="text-[10px]">
-                                    {activity.agent
-                                      .split(" ")
-                                      .map((name) => name[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 text-sm">
-                                  <div className="font-medium">
-                                    {activity.agent}
-                                  </div>
-                                  <div className="text-slate-400 mt-0.5">
-                                    <span
-                                      className={
-                                        activity.action === "Sold"
-                                          ? "text-green-400"
-                                          : "text-blue-400"
-                                      }
-                                    >
-                                      {activity.action}
-                                    </span>{" "}
-                                    {activity.property} • {activity.value}
-                                  </div>
-                                </div>
-                                <div className="text-slate-400 text-xs">
-                                  {activity.time}
-                                </div>
+                            <Avatar className="h-8 w-8 mr-3 bg-slate-700">
+                              <AvatarFallback>
+                                {activity.agent
+                                  .split(" ")
+                                  .map((name) => name[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                {activity.agent}
                               </div>
-                            ))}
+                              <div className="text-slate-400">
+                                <span
+                                  className={
+                                    activity.action === "Sold"
+                                      ? "text-green-400"
+                                      : "text-blue-400"
+                                  }
+                                >
+                                  {activity.action}
+                                </span>{" "}
+                                {activity.property} • {activity.value}
+                              </div>
+                            </div>
+                            <div className="text-slate-400 text-sm">
+                              {activity.time}
+                            </div>
                           </div>
-                        </div>
-                        <div className="pt-3 mt-auto flex-shrink-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full text-sm border-slate-700 hover:bg-slate-700/50"
-                            onClick={() => setShowMoreActivity(true)}
-                          >
-                            View all activity
-                            <ChevronDown size={14} className="ml-2" />
-                          </Button>
-                        </div>
-                      </div>
+                        )
+                      )}
                     </div>
                   </div>
-
-                  {/* Upcoming Appointments */}
-                  <div className="upcoming-appointments">
-                    <UpcomingAppointmentsCard />
+                  <div className="p-4 border-t border-slate-800">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowMoreActivity(false)}
+                    >
+                      Close
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
+            {/* Main Content */}
+            <div className="flex flex-1 flex-col gap-4 lg:gap-6 py-4 lg:py-6">
+              {showTransactionForm ? (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 overflow-y-auto">
+                  <div className="min-h-screen px-4 py-8">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-4 right-4"
+                      onClick={() => {
+                        setShowTransactionForm(false);
+                        setSelectedMarketType(null);
+                      }}
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                    <TransactionForm
+                      onClose={() => {
+                        setShowTransactionForm(false);
+                        setSelectedMarketType(null);
+                      }}
+                      marketType={selectedMarketType!}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[calc(100vh-4rem)] overflow-auto pb-6">
+                  {/* CSS Grid Dashboard Layout */}
+
+                  <div className="grid-dashboard">
+                    {/* Welcome Message */}
+                    <div className="welcome">
+                      <div
+                        className={`dashboard-card ${bgColor} rounded-2xl border ${borderColor} p-8 shadow-lg`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <h2 className={`text-xl font-semibold ${textColor}`}>
+                            {greeting}, {name}
+                          </h2>
+                          <Button onClick={handleNewTransaction}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Sales
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Top Metrics Row */}
+                    <div className="metrics">
+                      <div className="grid grid-cols-3 gap-6 h-full">
+                        {/* Total Revenue */}
+                        <div className="dashboard-card">
+                          <div
+                            className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
+                          >
+                            <div className="text-slate-400 text-xs">
+                              Total Revenue
+                            </div>
+                            <div className="text-2xl font-bold animate-fade-in">
+                              {isLoading
+                                ? "Loading..."
+                                : `RM ${totalRevenue.toFixed(2)}`}
+                            </div>
+                            <div className="text-green-400 text-xs flex items-center">
+                              <TrendingUp size={12} className="mr-1" />
+                              15% vs last year
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Avg Transaction */}
+                        <div className="dashboard-card">
+                          <div
+                            className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
+                          >
+                            <div className="text-slate-400 text-xs">
+                              Avg. Transaction
+                            </div>
+                            <div className="text-2xl font-bold animate-fade-in">
+                              {isLoading
+                                ? "Loading..."
+                                : `RM ${averageRevenue.toFixed(2)}`}
+                            </div>
+                            <div className="text-green-400 text-xs flex items-center">
+                              <TrendingUp size={12} className="mr-1" />
+                              8% vs last year
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Total Properties */}
+                        <div className="dashboard-card">
+                          <div
+                            className={`text-gray-400 px-4 py-3 flex flex-col justify-center h-full ${bgColor} rounded-2xl border ${borderColor}`}
+                          >
+                            <div className="text-slate-400 text-xs">
+                              Total Properties
+                            </div>
+                            <div className="text-2xl font-bold animate-fade-in">
+                              {isLoading
+                                ? "Loading..."
+                                : `${totalNumberOfTransactions}`}
+                            </div>
+                            <div className="flex text-xs gap-2">
+                              <div className="flex items-center">
+                                <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
+                                <span className="text-blue-400">37 Sold</span>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="w-2 h-2 rounded-full bg-purple-500 mr-1"></div>
+                                <span className="text-purple-400">
+                                  77 Rented
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Commission Claims */}
+                    <div className="commission-claims">
+                      <CommissionClaimsCard progress={commissionProgress} />
+                    </div>
+
+                    {/* Yearly Sales Transactions */}
+                    <div className="yearly-sales">
+                      <div className="dashboard-card">
+                        <div className="p-4 pb-0">
+                          <div className="flex justify-between items-center">
+                            <div className="text-lg font-semibold">
+                              Yearly Sales Transactions
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="text-sm text-slate-400">
+                            Monthly performance for 2023
+                          </div>
+                        </div>
+                        <div className="p-4 pt-3">
+                          <LineChartPulse
+                            data={yearlySalesData}
+                            height="h-56"
+                          />
+                          <div className="flex justify-between text-sm pt-2">
+                            <div className="flex items-center">
+                              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-400 mr-2"></div>
+                              <span>
+                                Total:{" "}
+                                {yearlySalesData.reduce(
+                                  (sum, item) => sum + item.value,
+                                  0
+                                )}{" "}
+                                Properties
+                              </span>
+                            </div>
+                            <div className="text-green-400 font-medium">
+                              +23% from previous year
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sales Transaction */}
+                    <div className="sales-transaction">
+                      <div className="dashboard-card">
+                        <div className="p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="text-base font-semibold">
+                              Sales Transaction
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-slate-400">
+                                Monthly Goal
+                              </div>
+                              <div className="text-sm font-medium">
+                                {salesProgress}%
+                              </div>
+                            </div>
+                            {renderSegments(salesProgress, 100)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div className="recent-activity">
+                      <div className="dashboard-card h-full flex flex-col">
+                        <div className="p-4 pb-2 border-b border-slate-800 flex-shrink-0">
+                          <div className="flex justify-between items-center">
+                            <div className="text-base font-semibold">
+                              Recent Activity
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="p-4 pt-2 flex-grow flex flex-col">
+                          <div className="recent-activity-items flex-grow">
+                            <div className="grid grid-cols-1 gap-3">
+                              {recentActivity.map((activity, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+                                >
+                                  <Avatar className="h-8 w-8 mr-2.5 bg-slate-700">
+                                    <AvatarFallback className="text-[10px]">
+                                      {activity.agent
+                                        .split(" ")
+                                        .map((name) => name[0])
+                                        .join("")}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 text-sm">
+                                    <div className="font-medium">
+                                      {activity.agent}
+                                    </div>
+                                    <div className="text-slate-400 mt-0.5">
+                                      <span
+                                        className={
+                                          activity.action === "Sold"
+                                            ? "text-green-400"
+                                            : "text-blue-400"
+                                        }
+                                      >
+                                        {activity.action}
+                                      </span>{" "}
+                                      {activity.property} • {activity.value}
+                                    </div>
+                                  </div>
+                                  <div className="text-slate-400 text-xs">
+                                    {activity.time}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="pt-3 mt-auto flex-shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-sm border-slate-700 hover:bg-slate-700/50"
+                              onClick={() => setShowMoreActivity(true)}
+                            >
+                              View all activity
+                              <ChevronDown size={14} className="ml-2" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Upcoming Appointments */}
+                    <div className="upcoming-appointments">
+                      <UpcomingAppointmentsCard />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
+        )}
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 
