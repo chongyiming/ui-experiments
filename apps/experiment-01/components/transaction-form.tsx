@@ -33,12 +33,10 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "loan">("cash");
-  const [transactionType, setTransactionType] = useState<
-    "sale" | "purchase" | "rental"
-  >("sale");
-  const [buyerType, setBuyerType] = useState<"individual" | "company">(
-    "individual"
+  const [transactionType, setTransactionType] = useState<"sale" | "rental">(
+    "sale"
   );
+
   const [formData, setFormData] = useState({
     agent_id: "",
     transactionPrice: "",
@@ -56,7 +54,10 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     bank_name: "",
     loan_amount: "",
     loan_status: "",
+    market_type: marketType,
+    property_address: "",
   });
+  console.log(formData);
   const [formErrors, setFormErrors] = useState({
     nettPrice: "",
     commissionSplit: "",
@@ -149,22 +150,12 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
       fetchAgentLevel();
     }
   }, [id, userId]);
-
-  // useEffect(() => {
-  //   const fetchCommission = async () => {
-  //     const { data, error } = await supabase
-  //       .from("AgentLevel")
-  //       .select("commission_rate")
-  //       .eq("id", currentLevel);
-
-  //     if (error) {
-  //       console.error("Error fetching level:", error);
-  //     } else {
-  //       setCommission(data[0]?.commission_rate);
-  //     }
-  //   };
-  //   fetchCommission();
-  // }, [currentLevel]);
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      market_type: marketType,
+    }));
+  }, [marketType]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -181,7 +172,9 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     const fetchAgents = async () => {
       const { data, error } = await supabase
         .from("Agents")
-        .select("id, username");
+        .select("id, username")
+        .neq("perm", 3)
+        .neq("perm", 0);
       if (error) {
         console.error("Error fetching agents:", error);
       } else {
@@ -310,17 +303,20 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   };
   useEffect(() => {
     const transactionPrice = parseFloat(formData.transactionPrice) || 0;
-    const propertiesCommission = selectedPropertyCommission / 100;
     const agentCommission = commission / 100;
 
-    if (
-      transactionPrice > 0 &&
-      propertiesCommission > 0 &&
-      agentCommission > 0
-    ) {
-      // Calculate full commission amount based on property commission and agent's commission rate
-      const fullCommissionAmount =
-        transactionPrice * propertiesCommission * agentCommission;
+    if (transactionPrice > 0 && agentCommission > 0) {
+      let fullCommissionAmount;
+
+      if (marketType === "primary") {
+        // For primary market, include propertiesCommission in the calculation
+        const propertiesCommission = selectedPropertyCommission / 100;
+        fullCommissionAmount =
+          transactionPrice * propertiesCommission * agentCommission;
+      } else {
+        // For secondary market, calculate commission without propertiesCommission
+        fullCommissionAmount = transactionPrice * agentCommission;
+      }
 
       if (showCoBrokeSection && selectedAgentId) {
         // If co-broke section is visible and a co-broke agent is selected, calculate the split
@@ -350,7 +346,8 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     commission,
     selectedAgentId,
     formData.commissionSplit,
-    showCoBrokeSection, // Add showCoBrokeSection to the dependency array
+    showCoBrokeSection,
+    marketType, // Add marketType to the dependency array
   ]);
 
   const handlePropertySelect = (propertyId: string) => {
@@ -416,6 +413,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         bank_name: formData.bank_name,
         loan_amount: parseFloat(formData.loan_amount),
         loan_status: formData.loan_status,
+        market_type: formData.market_type,
       };
 
       // Insert transaction data into the database
@@ -611,8 +609,10 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="propertyAddress">Property Address</Label>
                     <Textarea
-                      id="propertyAddress"
+                      id="property_address" // Match the id with formData key
                       placeholder="Enter complete property address"
+                      value={formData.property_address} // Bind to formData.property_address
+                      onChange={handleInputChange} // Handle changes
                       required
                     />
                   </div>
@@ -624,28 +624,6 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Transaction Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* <div className="space-y-2">
-              <Label htmlFor="transactionType">Transaction Type</Label>
-              <RadioGroup
-                value={transactionType}
-                onValueChange={(value: "sale" | "purchase" | "rental") =>
-                  setTransactionType(value)
-                }
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="sale" id="sale" />
-                  <Label htmlFor="sale">Sale</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="purchase" id="purchase" />
-                  <Label htmlFor="purchase">Purchase</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="rental" id="rental" />
-                  <Label htmlFor="rental">Rental</Label>
-                </div>
-              </RadioGroup>
-            </div> */}
               <div className="space-y-2">
                 <Label htmlFor="transactionPrice">Transaction Price</Label>
                 <Input
@@ -720,6 +698,24 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="loan" id="loan" />
                     <Label htmlFor="loan">Loan</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paymentMethod">Transaction Type</Label>
+                <RadioGroup
+                  value={transactionType}
+                  onValueChange={(value: "sale" | "rental") =>
+                    setTransactionType(value)
+                  }
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="sale" id="sale" />
+                    <Label htmlFor="sale">Sale</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rental" id="rental" />
+                    <Label htmlFor="rental">Rental</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -1079,12 +1075,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="incentives">Incentives/Rebates</Label>
-                  {/* <Textarea
-                    id="incentives_rebates"
-                    placeholder="Enter incentives if any"
-                    value={formData.incentives_rebates}
-                    onChange={handleInputChange}
-                  /> */}
+
                   <Input
                     id="incentives_rebates"
                     type="number"
