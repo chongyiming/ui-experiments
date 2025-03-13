@@ -231,18 +231,48 @@ const Dashboard = () => {
       setIsLoading(true);
       if (!userId) return; // Only proceed if we have a userId
 
-      const { data, error } = await supabase
-        .from("Agents")
-        .select("total_sales_volume,number_of_transactions,sold,rented")
-        .eq("user_id", userId);
+      // Fetch all transactions for the agent
+      const { data: agentData, error: agentError } = await supabase
+        .from("Transactions")
+        .select("*")
+        .eq("agent_id", parseInt(id));
 
-      if (error) {
-        console.error("Error fetching level:", error);
+      // Fetch all transactions for the co-broke
+      const { data: cobrokeData, error: cobrokeError } = await supabase
+        .from("Transactions")
+        .select("*")
+        .eq("cobroke_id", parseInt(id));
+
+      if (agentError || cobrokeError) {
+        console.error(
+          "Error fetching transactions:",
+          agentError || cobrokeError
+        );
       } else {
-        setTotalRevenue(data[0]?.total_sales_volume || 0);
-        setTotalNumberOfTransactions(data[0]?.number_of_transactions || 0);
-        setSold(data[0]?.sold || 0);
-        setRented(data[0]?.rented || 0);
+        // Combine agent and co-broke transactions
+        const allTransactions = [...(agentData || []), ...(cobrokeData || [])];
+
+        // Calculate total revenue
+        const totalRevenue = allTransactions.reduce((sum, transaction) => {
+          return sum + (transaction.transaction_price || 0);
+        }, 0);
+
+        // Calculate total number of transactions
+        const totalNumberOfTransactions = allTransactions.length;
+
+        // Calculate sold and rented counts
+        const sold = allTransactions.filter(
+          (transaction) => transaction.transaction_type === "sale"
+        ).length;
+        const rented = allTransactions.filter(
+          (transaction) => transaction.transaction_type === "rental"
+        ).length;
+
+        // Update state
+        setTotalRevenue(totalRevenue);
+        setTotalNumberOfTransactions(totalNumberOfTransactions);
+        setSold(sold);
+        setRented(rented);
       }
       setIsLoading(false);
     };
