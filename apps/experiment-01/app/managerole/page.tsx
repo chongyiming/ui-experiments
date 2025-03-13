@@ -22,7 +22,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Building, DollarSign, FileText, ChartBar, Bell, X, CalendarDays, Users, CheckCircle, Clock, TrendingUp, MoreHorizontal } from "lucide-react";
+import {
+  Building,
+  DollarSign,
+  FileText,
+  ChartBar,
+  Bell,
+  X,
+  CalendarDays,
+  Users,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  MoreHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UserDropdown from "@/components/user-dropdown";
 import { RiScanLine } from "@remixicon/react";
@@ -54,7 +67,8 @@ export default function Page() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddRoleDialogOpen, setIsAddRoleDialogOpen] = useState(false); // New state for Add Role dialog
-  const [newRole, setNewRole] = useState<Partial<Role>>({ // New state for the new role
+  const [newRole, setNewRole] = useState<Partial<Role>>({
+    // New state for the new role
     role_name: "",
     dashboard: false,
     contacts: false,
@@ -109,7 +123,12 @@ export default function Page() {
     } else {
       console.log("Role added successfully:", data);
       setIsAddRoleDialogOpen(false);
-      setNewRole({ role_name: "", dashboard: false, contacts: false, manage_role: false }); // Reset form
+      setNewRole({
+        role_name: "",
+        dashboard: false,
+        contacts: false,
+        manage_role: false,
+      }); // Reset form
       window.location.reload(); // Refresh the page to show the new role
     }
   };
@@ -153,12 +172,14 @@ export default function Page() {
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold">Manage roles</h1>
               <p className="text-sm text-muted-foreground">
-                Manage roles to control access and permissions for different users within the application. You can create, edit, or delete roles as needed.
+                Manage roles to control access and permissions for different
+                users within the application. You can create, edit, or delete
+                roles as needed.
               </p>
             </div>
-            <Button className="px-3" onClick={handleAddRole}>
+            {/* <Button className="px-3" onClick={handleAddRole}>
               Add Role
-            </Button>
+            </Button> */}
           </div>
           <div className="flex flex-col gap-4">
             <Input
@@ -238,7 +259,10 @@ export default function Page() {
                 checked={selectedRole?.manage_role || false}
                 onCheckedChange={(checked) => {
                   if (selectedRole) {
-                    setSelectedRole({ ...selectedRole, manage_role: !!checked });
+                    setSelectedRole({
+                      ...selectedRole,
+                      manage_role: !!checked,
+                    });
                   }
                 }}
                 disabled={!isEditMode}
@@ -333,7 +357,10 @@ export default function Page() {
             </div>
           </div>
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsAddRoleDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddRoleDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleSaveNewRole}>Save</Button>

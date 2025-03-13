@@ -66,22 +66,6 @@ import "@/components/index.css";
 import { useUserPermissions } from "@/components/UserPermissions";
 import { supabase } from "../supabaseClient";
 
-// Sample data for charts
-const yearlySalesData = [
-  { date: new Date("2023-01-15"), value: 4 },
-  { date: new Date("2023-02-15"), value: 6 },
-  { date: new Date("2023-03-15"), value: 8 },
-  { date: new Date("2023-04-15"), value: 7 },
-  { date: new Date("2023-05-15"), value: 9 },
-  { date: new Date("2023-06-15"), value: 12 },
-  { date: new Date("2023-07-15"), value: 11 },
-  { date: new Date("2023-08-15"), value: 13 },
-  { date: new Date("2023-09-15"), value: 10 },
-  { date: new Date("2023-10-15"), value: 8 },
-  { date: new Date("2023-11-15"), value: 11 },
-  { date: new Date("2023-12-15"), value: 15 },
-];
-
 // Sample recent activity
 const recentActivity = [
   {
@@ -153,6 +137,17 @@ const previousActivity = [
   },
 ];
 
+interface Transaction {
+  created_at: string;
+  agent_id: number;
+  cobroke_id: number;
+}
+
+interface MonthlyData {
+  date: Date;
+  value: number;
+}
+
 const Dashboard = () => {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showMarketTypeDialog, setShowMarketTypeDialog] = useState(false);
@@ -167,6 +162,8 @@ const Dashboard = () => {
   // const { name } = useUserPermissions();
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalNumberOfTransactions, setTotalNumberOfTransactions] = useState(0);
+  const [sold, setSold] = useState(0);
+  const [rented, setRented] = useState(0);
   const [averageRevenue, setAverageRevenue] = useState(0);
   const {
     userId,
@@ -176,7 +173,20 @@ const Dashboard = () => {
     isLoading: permissionsLoading,
   } = useUserPermissions();
   const [isLoading, setIsLoading] = useState(true);
-
+  const [yearlySalesData, setYearlySalesData] = useState([
+    { date: new Date("2023-01-01"), value: 0 },
+    { date: new Date("2023-02-01"), value: 0 },
+    { date: new Date("2023-03-01"), value: 0 },
+    { date: new Date("2023-04-01"), value: 0 },
+    { date: new Date("2023-05-01"), value: 0 },
+    { date: new Date("2023-06-01"), value: 0 },
+    { date: new Date("2023-07-01"), value: 0 },
+    { date: new Date("2023-08-01"), value: 0 },
+    { date: new Date("2023-09-01"), value: 0 },
+    { date: new Date("2023-10-01"), value: 0 },
+    { date: new Date("2023-11-01"), value: 0 },
+    { date: new Date("2023-12-01"), value: 0 },
+  ]);
   // Greeting based on time of day
   const currentHour = new Date().getHours();
   let greeting = "Good morning";
@@ -209,13 +219,21 @@ const Dashboard = () => {
   const labelColor = isDarkMode ? "#888" : "#666";
 
   useEffect(() => {
+    const getCurrentYearRange = () => {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1); // January 1st of the current year
+      const endOfYear = new Date(now.getFullYear(), 11, 31); // December 31st of the current year
+      console.log(startOfYear, endOfYear);
+      return { startOfYear, endOfYear };
+    };
+
     const fetchTotalSales = async () => {
       setIsLoading(true);
       if (!userId) return; // Only proceed if we have a userId
 
       const { data, error } = await supabase
         .from("Agents")
-        .select("total_sales_volume,number_of_transactions")
+        .select("total_sales_volume,number_of_transactions,sold,rented")
         .eq("user_id", userId);
 
       if (error) {
@@ -223,18 +241,96 @@ const Dashboard = () => {
       } else {
         setTotalRevenue(data[0]?.total_sales_volume || 0);
         setTotalNumberOfTransactions(data[0]?.number_of_transactions || 0);
+        setSold(data[0]?.sold || 0);
+        setRented(data[0]?.rented || 0);
+      }
+      setIsLoading(false);
+    };
+    const fetchYearlyPropertiesAgent = async () => {
+      setIsLoading(true);
+      if (!id) return; // Only proceed if we have a userId
+
+      const { startOfYear, endOfYear } = getCurrentYearRange();
+
+      const { data, error } = await supabase
+        .from("Transactions")
+        .select("*")
+        .eq("agent_id", parseInt(id))
+        .gte("created_at", startOfYear.toISOString())
+        .lte("created_at", endOfYear.toISOString());
+
+      if (error) {
+        console.log(id);
+        console.error("Error fetching yearly properties:", error);
+      } else {
+        console.log("Agent Transactions:", data);
+
+        // Group transactions by month
+        const groupedData = groupTransactionsByMonth(data);
+        setYearlySalesData(groupedData);
+      }
+      setIsLoading(false);
+    };
+    const fetchYearlyPropertiesCobroke = async () => {
+      setIsLoading(true);
+      if (!id) return; // Only proceed if we have a userId
+
+      const { startOfYear, endOfYear } = getCurrentYearRange();
+
+      const { data, error } = await supabase
+        .from("Transactions")
+        .select("*")
+        .eq("cobroke_id", parseInt(id))
+        .gte("created_at", startOfYear.toISOString())
+        .lte("created_at", endOfYear.toISOString());
+
+      if (error) {
+        console.error("Error fetching yearly properties:", error);
+      } else if (data) {
+        console.log("Co-Broke Transactions:", data);
+
+        // Group transactions by month
+        const groupedData = groupTransactionsByMonth(data);
+
+        // Update yearlySalesData by combining agent and co-broke data
+        setYearlySalesData((prev) =>
+          prev.map((month, index) => ({
+            ...month,
+            value: month.value + (groupedData[index]?.value || 0),
+          }))
+        );
       }
       setIsLoading(false);
     };
 
     if (userId) {
       fetchTotalSales();
+      fetchYearlyPropertiesAgent();
+      fetchYearlyPropertiesCobroke();
     }
-  }, [userId]);
+  }, [userId, id]);
 
   useEffect(() => {
     setAverageRevenue(totalRevenue / totalNumberOfTransactions);
   }, [totalNumberOfTransactions, totalRevenue]);
+
+  const groupTransactionsByMonth = (
+    transactions: Transaction[]
+  ): MonthlyData[] => {
+    const monthlyCounts = Array(12).fill(0); // Initialize an array for 12 months with 0 values
+
+    transactions.forEach((transaction) => {
+      const date = new Date(transaction.created_at);
+      const month = date.getMonth(); // Get the month index (0-11)
+      monthlyCounts[month] += 1; // Increment the count for the corresponding month
+    });
+
+    // Map the counts to the yearlySalesData format
+    return monthlyCounts.map((count, index) => ({
+      date: new Date(new Date().getFullYear(), index, 1), // Create a date for the first day of the month
+      value: count,
+    }));
+  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -510,10 +606,10 @@ const Dashboard = () => {
                                 ? "Loading..."
                                 : `RM ${totalRevenue.toFixed(2)}`}
                             </div>
-                            <div className="text-green-400 text-xs flex items-center">
+                            {/* <div className="text-green-400 text-xs flex items-center">
                               <TrendingUp size={12} className="mr-1" />
                               15% vs last year
-                            </div>
+                            </div> */}
                           </div>
                         </div>
 
@@ -530,10 +626,10 @@ const Dashboard = () => {
                                 ? "Loading..."
                                 : `RM ${averageRevenue.toFixed(2)}`}
                             </div>
-                            <div className="text-green-400 text-xs flex items-center">
+                            {/* <div className="text-green-400 text-xs flex items-center">
                               <TrendingUp size={12} className="mr-1" />
                               8% vs last year
-                            </div>
+                            </div> */}
                           </div>
                         </div>
 
@@ -553,12 +649,14 @@ const Dashboard = () => {
                             <div className="flex text-xs gap-2">
                               <div className="flex items-center">
                                 <div className="w-2 h-2 rounded-full bg-blue-500 mr-1"></div>
-                                <span className="text-blue-400">37 Sold</span>
+                                <span className="text-blue-400">
+                                  {sold} Sold
+                                </span>
                               </div>
                               <div className="flex items-center">
                                 <div className="w-2 h-2 rounded-full bg-purple-500 mr-1"></div>
                                 <span className="text-purple-400">
-                                  77 Rented
+                                  {rented} Rented
                                 </span>
                               </div>
                             </div>
@@ -589,7 +687,7 @@ const Dashboard = () => {
                             </Button>
                           </div>
                           <div className="text-sm text-slate-400">
-                            Monthly performance for 2023
+                            Monthly performance for {new Date().getFullYear()}{" "}
                           </div>
                         </div>
                         <div className="p-4 pt-3">
@@ -609,9 +707,9 @@ const Dashboard = () => {
                                 Properties
                               </span>
                             </div>
-                            <div className="text-green-400 font-medium">
+                            {/* <div className="text-green-400 font-medium">
                               +23% from previous year
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       </div>

@@ -63,7 +63,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     commissionSplit: "",
   });
   const [properties, setProperties] = useState<
-    { id: string; address: string; commission_rate: number }[]
+    { id: string; project_name: string; commission_rate: number }[]
   >([]);
   const [agents, setAgents] = useState<{ id: string; username: string }[]>([]);
   const [buyers, setBuyers] = useState<{ id: string; full_name: string }[]>([]);
@@ -94,8 +94,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     phone: "",
     referred_by: 0,
   });
-  console.log("userId", userId);
-  console.log("commission", commission);
+  console.log("selectedAgentId", selectedAgentId);
 
   useEffect(() => {
     if (!showCoBrokeSection) {
@@ -161,7 +160,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     const fetchProperties = async () => {
       const { data, error } = await supabase
         .from("Properties")
-        .select("id, address, commission_rate");
+        .select("id, project_name, commission_rate");
       if (error) {
         console.error("Error fetching properties:", error);
       } else {
@@ -199,7 +198,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   }, []);
 
   const filteredProperties = properties.filter((property) =>
-    property.address.toLowerCase().includes(searchQuery.toLowerCase())
+    property.project_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredAgents = agents.filter((agent) =>
@@ -414,6 +413,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         loan_amount: parseFloat(formData.loan_amount),
         loan_status: formData.loan_status,
         market_type: formData.market_type,
+        property_address: formData.property_address,
       };
 
       // Insert transaction data into the database
@@ -428,7 +428,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         console.log("Transaction created successfully:", data);
         alert("Transaction created successfully!");
         onClose();
-        addAgentCommission();
+        await addAgentCommission();
         window.location.reload();
       }
     } catch (error) {
@@ -438,12 +438,12 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   };
   const addAgentCommission = async () => {
     try {
-      // Fetch the primary agent's current commission and sales volume
+      // Fetch the primary agent's current commission, sales volume, and transaction counts
       const { data: primaryAgent, error: primaryAgentFetchError } =
         await supabase
           .from("Agents")
           .select(
-            "pending_commission, total_sales_volume, number_of_transactions"
+            "pending_commission, total_sales_volume, number_of_transactions, sold, rented"
           )
           .eq("id", formData.agent_id)
           .single();
@@ -465,15 +465,32 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
         parseFloat(formData.transactionPrice);
       const newNumberOfTransactions =
         (primaryAgent.number_of_transactions || 0) + 1;
-      // Update the primary agent's commission and sales volume
+
+      // Initialize updates object
+      const updates: {
+        pending_commission: number;
+        total_sales_volume: number;
+        number_of_transactions: number;
+        sold?: number;
+        rented?: number;
+      } = {
+        pending_commission: newPendingCommission,
+        total_sales_volume: newTotalSalesVolume,
+        number_of_transactions: newNumberOfTransactions,
+      };
+
+      // Update sold or rented count based on transaction type
+      if (transactionType === "sale") {
+        updates.sold = (primaryAgent.sold || 0) + 1;
+      } else if (transactionType === "rental") {
+        updates.rented = (primaryAgent.rented || 0) + 1;
+      }
+
+      // Update the primary agent's commission, sales volume, and transaction counts
       const { data: primaryAgentData, error: primaryAgentUpdateError } =
         await supabase
           .from("Agents")
-          .update({
-            pending_commission: newPendingCommission,
-            total_sales_volume: newTotalSalesVolume,
-            number_of_transactions: newNumberOfTransactions,
-          })
+          .update(updates)
           .eq("id", formData.agent_id);
 
       if (primaryAgentUpdateError) {
@@ -491,12 +508,12 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
 
       // If there is a co-broke agent, update their commission and sales volume as well
       if (selectedAgentId && formData.cobroke_commission_amount) {
-        // Fetch the co-broke agent's current commission and sales volume
+        // Fetch the co-broke agent's current commission, sales volume, and transaction counts
         const { data: coBrokeAgent, error: coBrokeAgentFetchError } =
           await supabase
             .from("Agents")
             .select(
-              "pending_commission, total_sales_volume,number_of_transactions"
+              "pending_commission, total_sales_volume, number_of_transactions, sold, rented"
             )
             .eq("id", selectedAgentId)
             .single();
@@ -518,15 +535,32 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
           parseFloat(formData.transactionPrice);
         const newCoBrokeNumberOfTransactions =
           (coBrokeAgent.number_of_transactions || 0) + 1;
-        // Update the co-broke agent's commission and sales volume
+
+        // Initialize updates object for co-broke agent
+        const coBrokeUpdates: {
+          pending_commission: number;
+          total_sales_volume: number;
+          number_of_transactions: number;
+          sold?: number;
+          rented?: number;
+        } = {
+          pending_commission: newCoBrokePendingCommission,
+          total_sales_volume: newCoBrokeTotalSalesVolume,
+          number_of_transactions: newCoBrokeNumberOfTransactions,
+        };
+
+        // Update sold or rented count based on transaction type for co-broke agent
+        if (transactionType === "sale") {
+          coBrokeUpdates.sold = (coBrokeAgent.sold || 0) + 1;
+        } else if (transactionType === "rental") {
+          coBrokeUpdates.rented = (coBrokeAgent.rented || 0) + 1;
+        }
+
+        // Update the co-broke agent's commission, sales volume, and transaction counts
         const { data: coBrokeAgentData, error: coBrokeAgentUpdateError } =
           await supabase
             .from("Agents")
-            .update({
-              pending_commission: newCoBrokePendingCommission,
-              total_sales_volume: newCoBrokeTotalSalesVolume,
-              number_of_transactions: newCoBrokeNumberOfTransactions,
-            })
+            .update(coBrokeUpdates)
             .eq("id", selectedAgentId);
 
         if (coBrokeAgentUpdateError) {
@@ -587,11 +621,11 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
                               className="p-2 hover:bg-muted cursor-pointer"
                               onClick={() => {
                                 handlePropertySelect(property.id);
-                                setSearchQuery(property.address);
+                                setSearchQuery(property.project_name);
                                 setIsDropdownVisible(false);
                               }}
                             >
-                              {property.address}
+                              {property.project_name}
                             </div>
                           ))}
                         </div>

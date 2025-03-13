@@ -53,10 +53,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 // Define the Property type
 interface Property {
   id: number;
-  address: string;
+  project_name: string;
   city: string;
   state: string;
-  zip: string;
+  developer: string;
   property_type: string;
   bedrooms?: number;
   bathrooms?: number;
@@ -79,10 +79,10 @@ export default function Page() {
     null
   );
   const [newProperty, setNewProperty] = useState<Partial<Property>>({
-    address: "",
+    project_name: "",
     city: "",
     state: "",
-    zip: "",
+    developer: "",
     property_type: "",
     bedrooms: 0,
     bathrooms: 0,
@@ -124,10 +124,10 @@ export default function Page() {
   const handleEditProperty = (property: Property) => {
     setSelectedProperty(property);
     setNewProperty({
-      address: property.address,
+      project_name: property.project_name,
       city: property.city,
       state: property.state,
-      zip: property.zip,
+      developer: property.developer,
       property_type: property.property_type,
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
@@ -142,10 +142,10 @@ export default function Page() {
   const handleSaveNewProperty = async () => {
     // Validate required fields
     if (
-      !newProperty.address ||
+      !newProperty.project_name ||
       !newProperty.city ||
       !newProperty.state ||
-      !newProperty.zip ||
+      !newProperty.developer ||
       !newProperty.property_type ||
       !newProperty.listing_price ||
       !newProperty.commission_rate
@@ -166,10 +166,10 @@ export default function Page() {
       console.log("Property added successfully:", data);
       setIsAddPropertyDialogOpen(false);
       setNewProperty({
-        address: "",
+        project_name: "",
         city: "",
         state: "",
-        zip: "",
+        developer: "",
         property_type: "",
         bedrooms: 0,
         bathrooms: 0,
@@ -199,7 +199,7 @@ export default function Page() {
     if (
       !newProperty.city ||
       !newProperty.state ||
-      !newProperty.zip ||
+      !newProperty.developer ||
       !newProperty.property_type
     ) {
       alert("Please fill in all required fields!");
@@ -243,10 +243,10 @@ export default function Page() {
       // Reset selected property and form
       setSelectedProperty(null);
       setNewProperty({
-        address: "",
+        project_name: "",
         city: "",
         state: "",
-        zip: "",
+        developer: "",
         property_type: "",
         bedrooms: 0,
         bathrooms: 0,
@@ -259,7 +259,7 @@ export default function Page() {
   };
 
   const filteredProperties = properties.filter((property) =>
-    property.address.toLowerCase().includes(searchTerm.toLowerCase())
+    property.project_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const statusCount = {
@@ -291,10 +291,10 @@ export default function Page() {
   }, []);
   const resetNewProperty = () => {
     setNewProperty({
-      address: "",
+      project_name: "",
       city: "",
       state: "",
-      zip: "",
+      developer: "",
       property_type: "",
       bedrooms: 0,
       bathrooms: 0,
@@ -350,7 +350,7 @@ export default function Page() {
               </label>
               <Input
                 id="search"
-                placeholder="Search by address"
+                placeholder="Search by project_name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full md:w-1/2"
@@ -393,7 +393,7 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredProperties.map((property) => (
                   <div key={property.id} className="p-4 border rounded-lg">
-                    <h3 className="font-medium">{property.address}</h3>
+                    <h3 className="font-medium">{property.project_name}</h3>
                     <p>
                       {property.city}, {property.state}
                     </p>
@@ -451,15 +451,18 @@ export default function Page() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="address" className="text-sm font-medium">
-                Address
+              <label htmlFor="project_name" className="text-sm font-medium">
+                Project Name
               </label>
               <Input
-                id="address"
-                placeholder="Enter address"
-                value={newProperty.address}
+                id="project_name"
+                placeholder="Enter project_name"
+                value={newProperty.project_name}
                 onChange={(e) =>
-                  setNewProperty({ ...newProperty, address: e.target.value })
+                  setNewProperty({
+                    ...newProperty,
+                    project_name: e.target.value,
+                  })
                 }
               />
             </div>
@@ -493,15 +496,15 @@ export default function Page() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="zip" className="text-sm font-medium">
-                Zip Code
+              <label htmlFor="developer" className="text-sm font-medium">
+                Developer
               </label>
               <Input
-                id="zip"
-                placeholder="Enter zip code"
-                value={newProperty.zip}
+                id="developer"
+                placeholder="Enter developer"
+                value={newProperty.developer}
                 onChange={(e) =>
-                  setNewProperty({ ...newProperty, zip: e.target.value })
+                  setNewProperty({ ...newProperty, developer: e.target.value })
                 }
               />
             </div>
@@ -653,14 +656,14 @@ export default function Page() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Address</p>
-                  <p className="font-medium">{selectedProperty.address}</p>
+                  <p className="text-sm text-gray-500">Project Name</p>
+                  <p className="font-medium">{selectedProperty.project_name}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Location</p>
                   <p className="font-medium">
                     {selectedProperty.city}, {selectedProperty.state}{" "}
-                    {selectedProperty.zip}
+                    {selectedProperty.developer}
                   </p>
                 </div>
                 <div>
@@ -740,15 +743,21 @@ export default function Page() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="edit-address" className="text-sm font-medium">
-                Address
+              <label
+                htmlFor="edit-project-name"
+                className="text-sm font-medium"
+              >
+                Project Name
               </label>
               <Input
-                id="edit-address"
-                placeholder="Enter address"
-                value={newProperty.address}
+                id="edit-project-name"
+                placeholder="Enter Project Name"
+                value={newProperty.project_name}
                 onChange={(e) =>
-                  setNewProperty({ ...newProperty, address: e.target.value })
+                  setNewProperty({
+                    ...newProperty,
+                    project_name: e.target.value,
+                  })
                 }
               />
             </div>
@@ -782,15 +791,15 @@ export default function Page() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="edit-zip" className="text-sm font-medium">
-                Zip Code
+              <label htmlFor="edit-developer" className="text-sm font-medium">
+                Developer
               </label>
               <Input
-                id="edit-zip"
-                placeholder="Enter zip code"
-                value={newProperty.zip}
+                id="edit-developer"
+                placeholder="Enter developer"
+                value={newProperty.developer}
                 onChange={(e) =>
-                  setNewProperty({ ...newProperty, zip: e.target.value })
+                  setNewProperty({ ...newProperty, developer: e.target.value })
                 }
               />
             </div>
