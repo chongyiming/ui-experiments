@@ -161,7 +161,9 @@ function Component({
     // Fetch all agents
     const { data: agentsData, error: agentsError } = await supabase
       .from("Agents")
-      .select("user_id, username");
+      .select("user_id, username")
+      .neq("perm", 3)
+      .neq("perm", 0);
 
     if (agentsError) {
       throw agentsError;

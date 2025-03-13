@@ -160,7 +160,8 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
     const fetchProperties = async () => {
       const { data, error } = await supabase
         .from("Properties")
-        .select("id, project_name, commission_rate");
+        .select("id, project_name, commission_rate")
+        .eq("status", true);
       if (error) {
         console.error("Error fetching properties:", error);
       } else {
