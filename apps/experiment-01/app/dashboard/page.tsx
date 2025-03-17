@@ -229,7 +229,7 @@ const Dashboard = () => {
 
     const fetchTotalSales = async () => {
       setIsLoading(true);
-      if (!userId) return; // Only proceed if we have a userId
+      if (!id) return;
 
       // Fetch all transactions for the agent
       const { data: agentData, error: agentError } = await supabase

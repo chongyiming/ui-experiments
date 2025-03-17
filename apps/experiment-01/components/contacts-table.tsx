@@ -101,6 +101,7 @@ type Item = {
   };
   approved_commission: number; // Replace value with approved_commission
   joinDate: string;
+  custom_commission: number;
 };
 type AgentWithReferral = {
   user_id: string;
@@ -115,6 +116,7 @@ type AgentWithReferral = {
   perm: number;
   gmail: string;
   approved_commission: number; // Add approved_commission
+  custom_commission: number;
 };
 const statusFilterFn: FilterFn<Item> = (
   row,
@@ -282,6 +284,28 @@ const getColumns = ({ data, setData }: GetColumnsProps): ColumnDef<Item>[] => [
     },
     size: 80,
   },
+  // {
+  //   header: "Custom Commission",
+  //   accessorKey: "custom_commission",
+  //   cell: ({ row }) => {
+  //     const customCommission = row.getValue("custom_commission") as number;
+  //     return (
+  //       <TooltipProvider delayDuration={0}>
+  //         <Tooltip>
+  //           <TooltipTrigger asChild>
+  //             <div className="flex h-full w-full items-center">
+  //               <Progress className="h-1 max-w-14" value={customCommission} />
+  //             </div>
+  //           </TooltipTrigger>
+  //           <TooltipContent align="start" sideOffset={-8}>
+  //             <p>{customCommission}%</p>
+  //           </TooltipContent>
+  //         </Tooltip>
+  //       </TooltipProvider>
+  //     );
+  //   },
+  //   size: 80,
+  // },
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
@@ -312,7 +336,6 @@ export default function ContactsTable() {
 
   const [data, setData] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const columns = useMemo(() => getColumns({ data, setData }), [data]);
 
   useEffect(() => {
@@ -325,7 +348,7 @@ export default function ContactsTable() {
       const { data: agentsData, error: agentsError } = await supabase
         .from("Agents")
         .select(
-          "user_id, username, ren, referrer_id,perm, gmail,approved_commission"
+          "user_id, username, ren, referrer_id,perm, gmail,approved_commission,custom_commission"
         );
 
       if (agentsError) {
@@ -428,6 +451,7 @@ export default function ContactsTable() {
         referral: agent.referral,
         approved_commission: agent.approved_commission || 0, // Add approved_commission
         joinDate: new Date().toISOString(),
+        custom_commission: agent.custom_commission || 0,
       }));
       setData(transformedData);
     } catch (error) {
@@ -809,6 +833,8 @@ function RowActions({
 }) {
   const [isUpdatePending, startUpdateTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [commissionValue, setCommissionValue] = useState<number | null>(null);
+  const [showCommissionDialog, setShowCommissionDialog] = useState(false);
 
   const handleStatusToggle = async () => {
     const newPerm =
@@ -870,6 +896,39 @@ function RowActions({
     }
   };
 
+  const handleSetCommission = async () => {
+    if (commissionValue === null) return;
+
+    try {
+      // Update the custom_commission in the database
+      const { error } = await supabase
+        .from("Agents")
+        .update({ custom_commission: commissionValue })
+        .eq("user_id", item.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the local state to reflect the change
+      startUpdateTransition(() => {
+        const updatedData = data.map((dataItem) => {
+          if (dataItem.id === item.id) {
+            return {
+              ...dataItem,
+              custom_commission: commissionValue, // Update only custom_commission
+            };
+          }
+          return dataItem;
+        });
+        setData(updatedData);
+        setShowCommissionDialog(false);
+      });
+    } catch (error) {
+      console.error("Error updating commission:", error);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -897,8 +956,17 @@ function RowActions({
                   ? "Activate contact"
                   : "Mark as Pending"}
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setCommissionValue(item.custom_commission); // Initialize with the agent's custom_commission
+                setShowCommissionDialog(true); // Open the dialog
+              }}
+            >
+              Set Commission
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
+
           <DropdownMenuItem
             onClick={() => setShowDeleteDialog(true)}
             className="text-destructive focus:text-destructive"
@@ -927,6 +995,46 @@ function RowActions({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showCommissionDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCommissionValue(null); // Reset commissionValue when dialog closes
+          }
+          setShowCommissionDialog(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set Commission</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter the commission value for {item.name}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="number"
+              value={commissionValue ?? ""}
+              onChange={(e) => setCommissionValue(Number(e.target.value))}
+              placeholder="Enter commission value"
+              className="pr-8" // Add padding to the right to prevent overlap
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+              %
+            </span>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSetCommission}
+              disabled={isUpdatePending}
+            >
+              Set Commission
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

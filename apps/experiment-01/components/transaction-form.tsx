@@ -125,7 +125,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
       const fetchAgentLevel = async () => {
         const { data, error } = await supabase
           .from("Agents")
-          .select("current_level_id")
+          .select("custom_commission, current_level_id")
           .eq("user_id", userId)
           .single();
 
@@ -133,19 +133,30 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
           console.error("Error fetching level:", error);
         } else {
           setCurrentLevel(data.current_level_id);
-          const { data: levelData, error: levelError } = await supabase
-            .from("AgentLevel")
-            .select("commission_rate")
-            .eq("id", data.current_level_id)
-            .single();
 
-          if (levelError) {
-            console.error("Error fetching commission rate:", levelError);
+          // Check if custom_commission is 0
+          if (data.custom_commission === 0) {
+            // Fetch commission rate from AgentLevel table
+            const { data: levelData, error: levelError } = await supabase
+              .from("AgentLevel")
+              .select("commission_rate")
+              .eq("id", data.current_level_id)
+              .single();
+
+            if (levelError) {
+              console.error("Error fetching commission rate:", levelError);
+            } else {
+              setCommission(levelData.commission_rate);
+              console.log("12312321312321312312", levelData.commission_rate);
+            }
           } else {
-            setCommission(levelData.commission_rate);
+            // Use custom_commission directly
+            setCommission(data.custom_commission);
+            console.log("12312321312321312312", data.custom_commission);
           }
         }
       };
+
       fetchAgentLevel();
     }
   }, [id, userId]);
@@ -217,8 +228,19 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
   const uploadFilesToSupabase = async (files: File[], folderName: string) => {
     const uploadedFileUrls: string[] = [];
 
+    // Function to sanitize file names
+    const sanitizeFileName = (fileName: string) => {
+      // Replace spaces with underscores
+      // Remove or replace special characters using a regex
+      return fileName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9-_\.]/g, "");
+    };
+
     for (const file of files) {
-      const filePath = `documents/${folderName}/${file.name}`;
+      // Sanitize the file name
+      const sanitizedFileName = sanitizeFileName(file.name);
+      const filePath = `documents/${folderName}/${sanitizedFileName}`;
+
+      // Upload the file to Supabase
       const { data, error } = await supabase.storage
         .from("test")
         .upload(filePath, file);
@@ -229,6 +251,7 @@ const TransactionForm = ({ onClose, marketType }: TransactionFormProps) => {
       }
 
       if (data) {
+        // Get the public URL of the uploaded file
         const { data: urlData } = supabase.storage
           .from("test")
           .getPublicUrl(filePath);
